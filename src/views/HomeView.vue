@@ -1,9 +1,12 @@
 <script setup>
-import TheWelcome from '../components/TheWelcome.vue'
+  import BaseLayout from '@/layouts/BaseLayout.vue';
 </script>
 
+
 <template>
-  <main>
-    <TheWelcome />
-  </main>
+  <BaseLayout>
+    <h1 class="text-3xl font-bold underline">
+    Hello world!
+  </h1>
+  </BaseLayout>
 </template>
