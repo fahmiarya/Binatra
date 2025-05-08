@@ -1,21 +1,20 @@
+<script setup>
+import BaseHeader from '@/components/shared/BaseHeader.vue';
+import BaseSidebar from '@/components/shared/BaseSidebar.vue';
+</script>
+
 <template>
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-gray-800 text-white p-4">
-      <slot name="sidebar" />
-    </aside>
+  <div class="flex flex-col min-h-screen">
+    <!-- Header (Full Width) -->
+    <BaseHeader/>
 
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
-      <!-- Header -->
-      <header class="bg-white shadow p-4">
-        <slot name="header" />
-      </header>
-
-      <!-- Page Content -->
-      <main class="flex-1 p-6 bg-gray-100">
-        <slot />
-      </main>
+    <div class="flex flex-1">
+      <!-- Sidebar -->
+     <BaseSidebar/>
+      <!-- Main Content -->
+      <div class="flex-1">
+         <slot/>
+      </div>
     </div>
   </div>
 </template>
