@@ -1,21 +1,35 @@
+<script setup>
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import BaseHeader from '@/components/shared/BaseHeader.vue';
+import BaseSidebar from '@/components/shared/BaseSidebar.vue';
+import { ref, onMounted } from 'vue';
+
+// Simulating loading process
+const isLoading = ref(true);
+
+onMounted(() => {
+  // Simulating network request delay for this context as well
+  setTimeout(() => {
+    isLoading.value = false; // Update this based on your real data fetch
+  }, 5000);
+});
+</script>
+
 <template>
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-gray-800 text-white p-4">
-      <slot name="sidebar" />
-    </aside>
+  <LoadingIndicator v-if="isLoading" />
 
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
-      <!-- Header -->
-      <header class="bg-white shadow p-4">
-        <slot name="header" />
-      </header>
 
-      <!-- Page Content -->
-      <main class="flex-1 p-6 bg-gray-100">
+  <div v-else class="flex flex-col min-h-screen">
+    <!-- Header (Full Width) -->
+    <BaseHeader />
+
+    <div class="flex flex-1">
+      <!-- Sidebar -->
+      <BaseSidebar />
+      <!-- Main Content -->
+      <div class="flex-1">
         <slot />
-      </main>
+      </div>
     </div>
   </div>
 </template>
