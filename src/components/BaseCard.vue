@@ -1,45 +1,42 @@
-<!-- BaseCard.vue -->
+<template>
+  <div :class="[
+    'bg-white rounded-lg shadow-sm border border-gray-200 relative',
+    customClass
+  ]">
+    <!-- Card Header -->
+    <div v-if="title || hasArrow" class="flex justify-between items-center p-6 pb-2">
+      <h3 v-if="title" class="text-xl font-semibold text-[#274C77]">{{ title }}</h3>
+      <button v-if="hasArrow" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Card Content -->
+    <div :class="[
+      title ? 'px-6 pb-6' : 'p-6'
+    ]">
+      <slot />
+    </div>
+  </div>
+</template>
+
 <script setup>
 defineProps({
-  title: String,
-  location: String,
-  value: String,
-  subValue: String,
-  description: String,
-  icon: String,
+  title: {
+    type: String,
+    default: ''
+  },
+  customClass: {
+    type: String,
+    default: ''
+  },
   hasArrow: {
     type: Boolean,
     default: true
   },
-  customClass: String
-})
+  showTopRightArrow: {
+    type: Boolean,
+    default: false
+  }
+});
 </script>
-
-<template>
-  <div class="bg-white rounded-[20px] shadow-lg p-4 relative" :class="customClass">
-    <div class="flex justify-between items-start">
-      <div>
-        <h3 class="text-lg font-semibold text-[#274C77]">{{ title }}</h3>
-
-        <slot name="location">
-          <p v-if="location" class="text-sm text-gray-500 mt-1">{{ location }}</p>
-        </slot>
-
-        <slot name="value">
-          <div v-if="value" class="mt-2">
-            <span class="text-2xl font-bold">{{ value }}</span>
-            <span v-if="subValue" class="text-xs text-gray-500 ml-2">{{ subValue }}</span>
-          </div>
-        </slot>
-
-        <p v-if="description" class="text-sm text-gray-500 mt-1">{{ description }}</p>
-      </div>
-
-      <div v-if="icon || $slots.icon">
-        <img v-if="icon" :src="icon" alt="Icon" class="h-16 w-16">
-        <slot v-else name="icon"></slot>
-      </div>
-    </div>
-    <slot></slot>
-  </div>
-</template>

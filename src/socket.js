@@ -1,8 +1,6 @@
-// src/socket.js
-
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3000"); // Ganti dengan URL server kamu jika diperlukan
+const socket = io("http://localhost:3000");
 
 // Fungsi untuk mendengarkan data sensor
 export const listenToSensorData = (callback) => {
