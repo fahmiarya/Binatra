@@ -59,30 +59,18 @@ const route = useRoute();
 const locations = [
   {
     name: "Pemerintah Kota",
-    icon: "fa-building",
-    lat: -7.257820549770008,
-    lon: 112.74848743800932,
     route: "/pemerintah-kota"
   },
   {
     name: "Dinas Pekerjaan Umum (PU)",
-    icon: "fa-hard-hat",
-    lat: -7.327835928981301,
-    lon: 112.72706435811946,
     route: "/dinas-pekerjaan-umum"
   },
   {
     name: "Dinas Perhubungan (Dishub)",
-    icon: "fa-car",
-    lat: -7.343299542429205,
-    lon: 112.72747989814852,
     route: "/dinas-perhubungan"
   },
   {
     name: "BPBD Jawa Timur",
-    icon: "fa-chart-line",
-    lat: -7.360353412714205,
-    lon: 112.72881724417964,
     route: "/bpbd-jawa-timur"
   },
 ];
@@ -96,7 +84,7 @@ const isActive = (routePath) => {
 async function handleLocationClick(lat, lon, locationName) {
   try {
     // Fetch weather data for the selected location
-    await weatherStore.fetchWeather(lat, lon);
+    await weatherStore.fetchWeather();
 
     // Optional: Store selected location in local storage or store
     localStorage.setItem('selectedLocation', JSON.stringify({

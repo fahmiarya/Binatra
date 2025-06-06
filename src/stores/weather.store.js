@@ -14,14 +14,12 @@ export const useWeatherStore = defineStore('weather', () => {
   axios.defaults.baseURL = 'http://localhost:3000';
 
   // Actions
-  async function fetchWeather(lat, lon) {
+  async function fetchWeather() {
     loading.value = true
     error.value = null
 
     try {
-      const response = await axios.get('/api/v1/cuaca', {
-        params: { lat, lon }
-      })
+      const response = await axios.get('/api/v1/cuaca')
 
       if (response.data && response.data.data) {
         const { weather: weatherData, main: mainData, name } = response.data.data
