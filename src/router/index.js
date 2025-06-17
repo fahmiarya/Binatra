@@ -5,8 +5,18 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'signin',
+      component: () => import('@/views/SignIn.vue'),
+    },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: () => import('@/views/SignUp.vue'),
+    },
+    {
+      path: '/home',
       name: 'home',
-      component: () => import( '@/views/HomeView.vue'),
+      component: () => import('@/views/HomeView.vue'),
     },
     {
       path: '/pemerintah-kota',
@@ -21,8 +31,8 @@ const router = createRouter({
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('@/views/404.vue')
-    }
+      component: () => import('@/views/404.vue'),
+    },
   ],
 })
 
