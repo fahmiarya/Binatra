@@ -2,16 +2,29 @@ import { io } from "socket.io-client";
 
 const socket = io("http://localhost:3000");
 
-// Fungsi untuk mendengarkan data sensor
+// Fungsi untuk mendengarkan data sensor secara umum
 export const listenToSensorData = (callback) => {
-  socket.on("sensor-data", (data) => {
-    callback(data);
-  });
+  socket.on("sensor-data", callback);
 };
 
-// Fungsi untuk mengirim data ke server jika diperlukan
+// Fungsi untuk mendengarkan data sensor terbaru
+export const listenToLatestSensorData = (callback) => {
+  socket.on("latest-sensor-data", callback);
+};
+
+// Fungsi untuk menangani error dari server
+export const listenToErrors = (callback) => {
+  socket.on("error", callback);
+};
+
+// Fungsi untuk mengirim event dan data ke server
 export const sendData = (event, data) => {
   socket.emit(event, data);
+};
+
+// Fungsi untuk meminta data sensor terbaru
+export const getLatestData = (deviceId = null) => {
+  socket.emit("get-latest-data", deviceId);
 };
 
 export default socket;
