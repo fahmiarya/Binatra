@@ -136,7 +136,7 @@
 <script setup>
 import BaseCard from '@/components/BaseCard.vue';
 import { useFloodSocket } from '@/composables/useFloodSocket.js';
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 
 // Socket composable
@@ -153,7 +153,7 @@ const {
 const subscribedLocations = ref(new Set());
 
 // API dan Infinite Scroll state
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const locationStatusHistory = ref([]);
 const loadingMoreNotifications = ref(false);
 const loadingMoreLocations = ref(false);
