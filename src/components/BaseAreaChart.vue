@@ -191,7 +191,7 @@ const handleFetchHistory = async () => {
 
 // Setup Socket.IO untuk real-time updates
 const setupSocket = () => {
-  socket = io('http://localhost:3000');
+  socket = io(import.meta.env.VITE_API_URL);
 
   socket.on('connect', () => {
     console.log('Connected to Socket.IO server');
