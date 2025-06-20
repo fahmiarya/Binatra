@@ -9,7 +9,7 @@ const {devices} = storeToRefs(deviceStore)
 
 const currentReading = ref(null);
 const statistics = ref(null);
-const selectedDevice = ref('');
+const selectedDevice = ref(null); // Change to null initially
 const dateRange = ref({
   start: new Date().toISOString().split('T')[0],
   end: new Date().toISOString().split('T')[0]
@@ -143,38 +143,49 @@ const formatTime = (timestamp) => {
   }
 };
 
-// const setTodayRange = async () => {
-//   const today = new Date().toISOString().split('T')[0];
-//   dateRange.value.start = today;
-//   dateRange.value.end = today;
-//   await handleFetchHistory();
-// };
-
-// const setWeekRange = async () => {
-//   const today = new Date();
-//   const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-//   dateRange.value.start = weekAgo.toISOString().split('T')[0];
-//   dateRange.value.end = today.toISOString().split('T')[0];
-//   await handleFetchHistory();
-// };
-
 const handleFetchHistory = async () => {
   if (!selectedDevice.value || !selectedDevice.value.code) {
-    console.log("No device selected");
+    console.log("No device selected, clearing data");
+    // Clear data jika tidak ada device yang dipilih
+    currentReading.value = null;
     return;
   }
 
-  console.log("device saat ini : ", selectedDevice.value.code)
-  await deviceStore.fetchSensorLogHistory(selectedDevice.value.code, dateRange.value.start, dateRange.value.end)
+  console.log("Fetching data for device:", selectedDevice.value.code);
 
-  // Update currentReading dari store
-  const logs = deviceStore.sensorLogs;
-  if (logs && logs.length > 0) {
-    currentReading.value = {
-      waterLevel: logs[0].waterLevel,
-      rainfall: logs[0].rainfall,
-      timestamp: logs[0].timestamp // Gunakan timestamp asli dari database
-    };
+  try {
+    await deviceStore.fetchSensorLogHistory(
+      selectedDevice.value.code,
+      dateRange.value.start,
+      dateRange.value.end
+    );
+
+    // Update currentReading dari store setelah fetch berhasil
+    const logs = deviceStore.sensorLogs;
+    if (logs && logs.length > 0) {
+      currentReading.value = {
+        waterLevel: logs[0].waterLevel,
+        rainfall: logs[0].rainfall,
+        timestamp: logs[0].timestamp,
+        deviceCode: selectedDevice.value.code // Tambahkan device code untuk validasi
+      };
+
+      console.log("✅ Current reading updated for device:", selectedDevice.value.code, currentReading.value);
+    } else {
+      // Jika tidak ada data, clear current reading
+      currentReading.value = {
+        waterLevel: 0,
+        rainfall: 0,
+        timestamp: null,
+        deviceCode: selectedDevice.value.code
+      };
+
+      console.log("⚠️ No data found for device:", selectedDevice.value.code);
+    }
+  } catch (error) {
+    console.error("❌ Error fetching history for device:", selectedDevice.value.code, error);
+    // Clear data on error
+    currentReading.value = null;
   }
 }
 
@@ -212,6 +223,10 @@ const setupSocket = () => {
 const updateChartRealTime = (data) => {
   // Hanya proses jika data dari device yang sedang dipilih
   if (!selectedDevice.value || data.deviceCode !== selectedDevice.value.code) {
+    console.log("❌ Real-time data ignored - device mismatch:", {
+      selectedDevice: selectedDevice.value?.code,
+      dataDevice: data.deviceCode
+    });
     return;
   }
 
@@ -220,11 +235,12 @@ const updateChartRealTime = (data) => {
 
   console.log(`📊 Real-time update - Device: ${data.deviceCode}, Water: ${waterLevel}cm, Rain: ${rainfall}mm`);
 
-  // Update current reading
+  // Update current reading dengan validasi device
   currentReading.value = {
     waterLevel: waterLevel,
     rainfall: rainfall,
-    timestamp: data.timestamp
+    timestamp: data.timestamp,
+    deviceCode: data.deviceCode
   };
 
   // Use store method untuk update chart data
@@ -235,62 +251,97 @@ const updateChartRealTime = (data) => {
   });
 };
 
+// Watch for device changes
 watch(selectedDevice, async (newDevice, oldDevice) => {
+  console.log("🔄 Device changed:", {
+    old: oldDevice?.code,
+    new: newDevice?.code
+  });
+
   // Socket.IO: Unsubscribe dari device lama
   if (socket && oldDevice && oldDevice.code) {
     socket.emit('unsubscribe-device', oldDevice.code);
+    console.log("📤 Unsubscribed from device:", oldDevice.code);
   }
 
   // Socket.IO: Subscribe ke device baru
   if (socket && newDevice && newDevice.code) {
     socket.emit('subscribe-device', newDevice.code);
+    console.log("📥 Subscribed to device:", newDevice.code);
   }
 
+  // Fetch data untuk device baru
   await handleFetchHistory();
 });
 
+// Watch for date range changes
 watch(() => [dateRange.value.start, dateRange.value.end], async () => {
+  console.log("📅 Date range changed:", dateRange.value);
   await handleFetchHistory();
 }, { deep: true });
 
+// Watch untuk devices array dan set selectedDevice saat pertama kali loaded
 watch(() => devices.value, (newDevices) => {
-  if (newDevices.length > 0) {
-    selectedDevice.value = newDevices[0]
+  console.log("📋 Devices loaded:", newDevices);
+
+  if (newDevices.length > 0 && !selectedDevice.value) {
+    // Set device pertama sebagai default hanya jika belum ada yang dipilih
+    selectedDevice.value = newDevices[0];
+    console.log("🎯 Default device selected:", selectedDevice.value.code);
   }
-})
+}, { immediate: true });
 
 onMounted(async () => {
+  console.log("🚀 Component mounted - initializing...");
+
   // Setup Socket.IO connection untuk real-time
-  setupSocket()
+  setupSocket();
 
-  await deviceStore.fetchDevices()
-  await deviceStore.fetchSensorLogHistory('DEV001', dateRange.value.start, dateRange.value.end)
+  try {
+    // 1. Fetch devices terlebih dahulu
+    console.log("📡 Fetching devices...");
+    await deviceStore.fetchDevices();
 
-  // Update currentReading setelah fetch data
-  const logs = deviceStore.sensorLogs;
-  if (logs && logs.length > 0) {
-    currentReading.value = {
-      waterLevel: logs[0].waterLevel,
-      rainfall: logs[0].rainfall,
-      timestamp: logs[0].timestamp
-    };
+    // 2. Tunggu sampai devices ter-load dan selectedDevice ter-set
+    if (devices.value.length > 0) {
+      // Jika devices sudah ada, set selectedDevice jika belum ada
+      if (!selectedDevice.value) {
+        selectedDevice.value = devices.value[0];
+        console.log("🎯 Initial device selected:", selectedDevice.value.code);
+      }
+
+      // 3. Fetch data untuk selected device
+      await handleFetchHistory();
+    } else {
+      console.log("⚠️ No devices found");
+    }
+
+    console.log("✅ Component initialization completed");
+
+  } catch (error) {
+    console.error("❌ Error during component initialization:", error);
   }
 });
 
-
 onUnmounted(() => {
+  console.log("🔄 Component unmounting - cleaning up...");
+
   if (intervalId) {
     clearInterval(intervalId);
   }
 
-  // NEW: Cleanup socket connection
+  // Cleanup socket connection
   if (socket) {
     // Unsubscribe dari device saat ini
     if (selectedDevice.value && selectedDevice.value.code) {
       socket.emit('unsubscribe-device', selectedDevice.value.code);
+      console.log("📤 Unsubscribed from device on unmount:", selectedDevice.value.code);
     }
     socket.disconnect();
+    console.log("🔌 Socket disconnected");
   }
+
+  console.log("✅ Component cleanup completed");
 });
 </script>
 
@@ -306,29 +357,29 @@ onUnmounted(() => {
           gap: '5px',
           padding: '5px 10px',
           borderRadius: '15px',
-          backgroundColor: selectedDevice.status === 'CONNECTED' ? '#e8f5e8' : '#fce8e8',
-          color: selectedDevice.status === 'CONNECTED' ? '#4caf50' : '#f44336',
+          backgroundColor: selectedDevice?.status === 'CONNECTED' ? '#e8f5e8' : '#fce8e8',
+          color: selectedDevice?.status === 'CONNECTED' ? '#4caf50' : '#f44336',
           fontSize: '12px'
         }">
           <span :style="{
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: selectedDevice.status === 'CONNECTED' ? '#4caf50' : '#f44336'
+            backgroundColor: selectedDevice?.status === 'CONNECTED' ? '#4caf50' : '#f44336'
           }"></span>
-          {{ selectedDevice.status === 'CONNECTED' ? 'Connected' : 'Disconnected' }}
+          {{ selectedDevice?.status === 'CONNECTED' ? 'Connected' : 'Disconnected' }}
         </div>
 
         <!-- Device Selector -->
         <select v-model="selectedDevice" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #ddd;">
-          <option v-for="device in devices" :key="device" :value="device">
+          <option v-for="device in devices" :key="device.id" :value="device">
             {{ device.code }}
           </option>
         </select>
       </div>
     </div>
 
-    <!-- NEW: Statistics Cards -->
+    <!-- Statistics Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px;">
         <h4 style="margin: 0 0 5px 0; font-size: 14px;">Current Water Level</h4>
@@ -343,7 +394,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- NEW: Date Range Controls -->
+    <!-- Date Range Controls -->
     <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
       <input
         type="date"
@@ -356,19 +407,20 @@ onUnmounted(() => {
         v-model="dateRange.end"
         style="padding: 5px; border: 1px solid #ddd; border-radius: 4px;"
       />
-      <!-- <button @click="setTodayRange" style="padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-        Today
-      </button>
-      <button @click="setWeekRange" style="padding: 5px 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
-        This Week
-      </button> -->
     </div>
 
+    <!-- Chart -->
     <apexchart
+      v-if="selectedDevice"
       type="area"
       height="400"
       :options="options"
       :series="series"
     ></apexchart>
+
+    <!-- No device selected message -->
+    <div v-else style="text-align: center; padding: 40px; color: #666;">
+      <p>Please select a device to view data</p>
+    </div>
   </div>
 </template>

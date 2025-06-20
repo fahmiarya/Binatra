@@ -10,6 +10,8 @@ export function useFloodSocket() {
   const floodSummary = ref(null);
   const recentlyUpdatedLocations = ref([]);
   const loading = ref(true);
+  const notifications = ref([]); // NEW: Store notifications
+  const unreadCount = ref(0); // NEW: Unread notification count
 
   // Event handlers cleanup functions
   const cleanupFunctions = [];
@@ -44,6 +46,24 @@ export function useFloodSocket() {
       showBrowserNotification(locationName, previousStatus, newStatus);
 
       console.log(`✅ Updated ${locationName}: ${previousStatus} → ${newStatus}`);
+    });
+
+    // NEW: Main notification handler
+    const newNotificationCleanup = socket.on('new-notification', (notification) => {
+      console.log('🔔 New notification received:', notification);
+
+      addNotification(notification);
+
+      // Show browser notification based on type and severity
+      if (['location_status_change', 'new_flood_location'].includes(notification.type)) {
+        showAdvancedBrowserNotification(notification);
+      }
+    });
+
+    // NEW: Location-specific notification handler
+    const locationNotificationCleanup = socket.on('notification-location-*', (notification) => {
+      console.log('📍 Location-specific notification:', notification);
+      addNotification(notification);
     });
 
     // Flood warnings updated handler
@@ -90,11 +110,66 @@ export function useFloodSocket() {
     // Store cleanup functions
     cleanupFunctions.push(
       locationStatusCleanup,
+      newNotificationCleanup,
+      locationNotificationCleanup,
       floodWarningsCleanup,
       floodSummaryCleanup,
       floodStatusCleanup,
       locationErrorCleanup
     );
+  };
+
+  // NEW: Add notification to list
+  const addNotification = (notification) => {
+    // Add to beginning of array (newest first)
+    notifications.value.unshift({
+      ...notification,
+      isRead: false,
+      receivedAt: new Date().toISOString()
+    });
+
+    // Increment unread count
+    unreadCount.value += 1;
+
+    // Keep only last 50 notifications
+    if (notifications.value.length > 50) {
+      notifications.value = notifications.value.slice(0, 50);
+    }
+
+    console.log(`📥 Added notification: ${notification.title}`);
+  };
+
+  // NEW: Mark notification as read
+  const markAsRead = (notificationId) => {
+    const notification = notifications.value.find(n => n.id === notificationId);
+    if (notification && !notification.isRead) {
+      notification.isRead = true;
+      unreadCount.value = Math.max(0, unreadCount.value - 1);
+    }
+  };
+
+  // NEW: Mark all notifications as read
+  const markAllAsRead = () => {
+    notifications.value.forEach(notification => {
+      notification.isRead = true;
+    });
+    unreadCount.value = 0;
+  };
+
+  // NEW: Clear all notifications
+  const clearAllNotifications = () => {
+    notifications.value = [];
+    unreadCount.value = 0;
+  };
+
+  // NEW: Get notifications by type
+  const getNotificationsByType = (type) => {
+    return notifications.value.filter(n => n.type === type);
+  };
+
+  // NEW: Get unread notifications
+  const getUnreadNotifications = () => {
+    return notifications.value.filter(n => !n.isRead);
   };
 
   // Handle location status change
@@ -129,7 +204,7 @@ export function useFloodSocket() {
     }
   };
 
-  // Show browser notification
+  // Show browser notification (legacy)
   const showBrowserNotification = (locationName, previousStatus, newStatus) => {
     if ('Notification' in window && Notification.permission === 'granted') {
       // Only show notification for critical status changes
@@ -148,6 +223,34 @@ export function useFloodSocket() {
     }
   };
 
+  // NEW: Advanced browser notification handler
+  const showAdvancedBrowserNotification = (notification) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const shouldShowBrowserNotification =
+        notification.severity === 'high' ||
+        ['new_flood_location', 'location_status_change'].includes(notification.type);
+
+      if (shouldShowBrowserNotification) {
+        const iconMap = {
+          'new_flood_location': '🌊',
+          'location_status_change': '⚠️',
+          'device_status_change': '📡',
+          'new_device': '🆕'
+        };
+
+        const icon = iconMap[notification.type] || '🔔';
+
+        new Notification(`${icon} ${notification.title}`, {
+          body: `${notification.location} ${notification.timeframe}`,
+          icon: '/favicon.ico',
+          tag: `${notification.type}-${notification.id}`,
+          requireInteraction: notification.severity === 'high',
+          data: notification // Store notification data
+        });
+      }
+    }
+  };
+
   // Request notification permission
   const requestNotificationPermission = () => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -159,12 +262,27 @@ export function useFloodSocket() {
 
   // Subscribe to location updates
   const subscribeToLocation = (locationId) => {
+    // Subscribe to location notifications
+    socket.emit('subscribe-location-notifications', locationId);
     return socket.subscribeToLocation(locationId);
   };
 
   // Unsubscribe from location updates
   const unsubscribeFromLocation = (locationId) => {
+    socket.emit('unsubscribe-location-notifications', locationId);
     return socket.unsubscribeFromLocation(locationId);
+  };
+
+  // NEW: Subscribe to all notifications
+  const subscribeToNotifications = () => {
+    socket.emit('subscribe-notifications');
+    console.log('🔔 Subscribed to all notifications');
+  };
+
+  // NEW: Unsubscribe from all notifications
+  const unsubscribeFromNotifications = () => {
+    socket.emit('unsubscribe-notifications');
+    console.log('🔕 Unsubscribed from all notifications');
   };
 
   // Refresh flood data
@@ -201,6 +319,9 @@ export function useFloodSocket() {
     // Setup flood-specific listeners
     initializeFloodListeners();
 
+    // Subscribe to notifications
+    subscribeToNotifications();
+
     // Request notification permission
     requestNotificationPermission();
 
@@ -211,6 +332,7 @@ export function useFloodSocket() {
       // Wait for connection then request
       const connectCleanup = socket.on('connect', () => {
         socket.requestFloodStatus();
+        subscribeToNotifications(); // Re-subscribe on reconnect
         connectCleanup(); // Remove this listener after first connection
       });
     }
@@ -218,6 +340,9 @@ export function useFloodSocket() {
 
   // Cleanup function
   const cleanup = () => {
+    // Unsubscribe from notifications
+    unsubscribeFromNotifications();
+
     // Remove all flood-specific listeners
     cleanupFunctions.forEach(cleanup => {
       if (typeof cleanup === 'function') {
@@ -246,11 +371,24 @@ export function useFloodSocket() {
     reconnecting: socket.reconnecting,
     lastUpdateTime: socket.lastUpdateTime,
 
+    // NEW: Notification state
+    notifications,
+    unreadCount,
+
     // Methods
     subscribeToLocation,
     unsubscribeFromLocation,
     refreshFloodData,
     requestNotificationPermission,
+
+    // NEW: Notification methods
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications,
+    getNotificationsByType,
+    getUnreadNotifications,
+    subscribeToNotifications,
+    unsubscribeFromNotifications,
 
     // Utilities
     formatLastUpdate,

@@ -10,6 +10,7 @@ export function useDeviceSocket() {
   const deviceStatuses = ref(new Map());
   const connectedDevices = ref([]);
   const recentSensorUpdates = ref([]);
+  const deviceNotifications = ref([]);
 
   // Event handlers cleanup functions
   const cleanupFunctions = [];
@@ -99,6 +100,24 @@ export function useDeviceSocket() {
       console.error('❌ Device check error:', data);
     });
 
+    // NEW: Device notification handlers
+    const deviceNotificationCleanup = socket.on('new-notification', (notification) => {
+      // Filter device-related notifications
+      if (['device_status_change', 'new_device'].includes(notification.type)) {
+        console.log('📱 Device notification received:', notification);
+        addDeviceNotification(notification);
+
+        // Show browser notification for device status changes
+        showDeviceBrowserNotification(notification);
+      }
+    });
+
+    // NEW: Device-specific notification handler
+    const specificDeviceNotificationCleanup = socket.on('notification-device-*', (notification) => {
+      console.log('📱 Device-specific notification:', notification);
+      addDeviceNotification(notification);
+    });
+
     // Store cleanup functions
     cleanupFunctions.push(
       sensorDataCleanup,
@@ -109,18 +128,81 @@ export function useDeviceSocket() {
       heartbeatErrorCleanup,
       statusSummaryCleanup,
       deviceCheckCleanup,
-      deviceCheckErrorCleanup
+      deviceCheckErrorCleanup,
+      deviceNotificationCleanup,
+      specificDeviceNotificationCleanup
     );
+  };
+
+  // NEW: Add device notification
+  const addDeviceNotification = (notification) => {
+    deviceNotifications.value.unshift({
+      ...notification,
+      isRead: false,
+      receivedAt: new Date().toISOString()
+    });
+
+    // Keep only last 20 device notifications
+    if (deviceNotifications.value.length > 20) {
+      deviceNotifications.value = deviceNotifications.value.slice(0, 20);
+    }
+
+    console.log(`📥 Added device notification: ${notification.title}`);
+  };
+
+  // NEW: Show browser notification for device changes
+  const showDeviceBrowserNotification = (notification) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const shouldShow = notification.type === 'device_status_change' &&
+                        (notification.newStatus === 'DISCONNECTED' || notification.newStatus === 'CONNECTED');
+
+      if (shouldShow) {
+        const icon = notification.newStatus === 'CONNECTED' ? '🟢' : '🔴';
+        const statusText = notification.newStatus === 'CONNECTED' ? 'Terhubung' : 'Terputus';
+
+        new Notification(`${icon} Device ${statusText}`, {
+          body: `${notification.deviceCode} - ${notification.location}`,
+          icon: '/favicon.ico',
+          tag: `device-${notification.deviceCode}`,
+          requireInteraction: notification.newStatus === 'DISCONNECTED' // Require interaction for disconnection
+        });
+      }
+    }
+  };
+
+  // NEW: Mark device notification as read
+  const markDeviceNotificationAsRead = (notificationId) => {
+    const notification = deviceNotifications.value.find(n => n.id === notificationId);
+    if (notification && !notification.isRead) {
+      notification.isRead = true;
+    }
+  };
+
+  // NEW: Get unread device notifications
+  const getUnreadDeviceNotifications = () => {
+    return deviceNotifications.value.filter(n => !n.isRead);
+  };
+
+  // NEW: Clear device notifications
+  const clearDeviceNotifications = () => {
+    deviceNotifications.value = [];
   };
 
   // Update device status
   const updateDeviceStatus = (deviceCode, updates) => {
     const currentStatus = deviceStatuses.value.get(deviceCode) || {};
-    deviceStatuses.value.set(deviceCode, {
+    const newStatus = {
       ...currentStatus,
       ...updates,
       deviceCode
-    });
+    };
+
+    deviceStatuses.value.set(deviceCode, newStatus);
+
+    // Check for status change and create local notification if needed
+    if (currentStatus.status && currentStatus.status !== updates.status) {
+      console.log(`📱 Device ${deviceCode} status changed: ${currentStatus.status} → ${updates.status}`);
+    }
   };
 
   // Add to recent sensor updates
@@ -139,21 +221,26 @@ export function useDeviceSocket() {
 
   // Subscribe to specific device
   const subscribeToDevice = (deviceId) => {
+    // Also subscribe to device notifications
+    socket.emit('subscribe-device-notifications', deviceId);
     return socket.subscribeToDevice(deviceId);
   };
 
   // Unsubscribe from specific device
   const unsubscribeFromDevice = (deviceId) => {
+    socket.emit('unsubscribe-device-notifications', deviceId);
     return socket.unsubscribeFromDevice(deviceId);
   };
 
   // Subscribe to device status
   const subscribeToDeviceStatus = (deviceCode) => {
+    socket.emit('subscribe-device-notifications', deviceCode);
     return socket.subscribeToDeviceStatus(deviceCode);
   };
 
   // Unsubscribe from device status
   const unsubscribeFromDeviceStatus = (deviceCode) => {
+    socket.emit('unsubscribe-device-notifications', deviceCode);
     return socket.unsubscribeFromDeviceStatus(deviceCode);
   };
 
@@ -185,6 +272,12 @@ export function useDeviceSocket() {
     recentSensorUpdates.value = [];
   };
 
+  // NEW: Subscribe to all device notifications
+  const subscribeToAllDeviceNotifications = () => {
+    socket.emit('subscribe-notifications');
+    console.log('🔔 Subscribed to all device notifications');
+  };
+
   // Initialize device monitoring
   const initialize = () => {
     // Connect socket if not already connected
@@ -195,6 +288,9 @@ export function useDeviceSocket() {
     // Setup device-specific listeners
     initializeDeviceListeners();
 
+    // Subscribe to device notifications
+    subscribeToAllDeviceNotifications();
+
     // Request device status when connected
     if (socket.isConnected()) {
       // Device status is automatically sent on connection
@@ -202,6 +298,7 @@ export function useDeviceSocket() {
       // Wait for connection
       const connectCleanup = socket.on('connect', () => {
         // Device status summary will be automatically sent
+        subscribeToAllDeviceNotifications(); // Re-subscribe on reconnect
         connectCleanup();
       });
     }
@@ -236,6 +333,9 @@ export function useDeviceSocket() {
     reconnecting: socket.reconnecting,
     lastUpdateTime: socket.lastUpdateTime,
 
+    // NEW: Device notification state
+    deviceNotifications,
+
     // Methods
     subscribeToDevice,
     unsubscribeFromDevice,
@@ -245,6 +345,11 @@ export function useDeviceSocket() {
     getAllDeviceStatuses,
     isDeviceOnline,
     clearRecentUpdates,
+
+    markDeviceNotificationAsRead,
+    getUnreadDeviceNotifications,
+    clearDeviceNotifications,
+    subscribeToAllDeviceNotifications,
 
     // Utilities
     isConnected: socket.isConnected,
