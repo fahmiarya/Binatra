@@ -9,7 +9,7 @@ export const useLocationStore = defineStore('locations', () => {
   const isLoading = ref(false)
   const error = ref(null)
 
-  axios.defaults.baseURL = 'http://localhost:3000';
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
   const getTotalLocations = async () => {
     try {

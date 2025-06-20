@@ -11,7 +11,7 @@ export const useDeviceStore = defineStore('device', () => {
   const sensorLogs = ref([])
   const currentReading = ref(null)
 
-  axios.defaults.baseURL = 'http://localhost:3000';
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
   const getConnectedDevices = async () => {
     try {
