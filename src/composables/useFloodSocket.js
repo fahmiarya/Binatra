@@ -10,8 +10,9 @@ export function useFloodSocket() {
   const floodSummary = ref(null);
   const recentlyUpdatedLocations = ref([]);
   const loading = ref(true);
-  const notifications = ref([]); // NEW: Store notifications
-  const unreadCount = ref(0); // NEW: Unread notification count
+  const notifications = ref([]);
+  const currentLocationStatus = ref(null)
+  const unreadCount = ref(0);
 
   // Event handlers cleanup functions
   const cleanupFunctions = [];
@@ -47,6 +48,11 @@ export function useFloodSocket() {
 
       console.log(`✅ Updated ${locationName}: ${previousStatus} → ${newStatus}`);
     });
+
+    const newLocationStatusHistory = socket.on('location_status_history_created', (newData) => {
+      currentLocationStatus.value = newData;
+      console.log("lokasi terbaru dari socket : ", currentLocationStatus.value)
+    })
 
     // NEW: Main notification handler
     const newNotificationCleanup = socket.on('new-notification', (notification) => {
@@ -112,6 +118,7 @@ export function useFloodSocket() {
       locationStatusCleanup,
       newNotificationCleanup,
       locationNotificationCleanup,
+      newLocationStatusHistory,
       floodWarningsCleanup,
       floodSummaryCleanup,
       floodStatusCleanup,
@@ -370,6 +377,7 @@ export function useFloodSocket() {
     connected: socket.connected,
     reconnecting: socket.reconnecting,
     lastUpdateTime: socket.lastUpdateTime,
+    currentLocationStatus,
 
     // NEW: Notification state
     notifications,
