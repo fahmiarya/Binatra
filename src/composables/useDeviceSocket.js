@@ -8,7 +8,7 @@ export function useDeviceSocket() {
   // Reactive state
   const sensorData = ref({});
   const deviceStatuses = ref(new Map());
-  const connectedDevices = ref([]);
+  const connectedDevices = ref(null);
   const recentSensorUpdates = ref([]);
   const deviceNotifications = ref([]);
 
@@ -74,20 +74,7 @@ export function useDeviceSocket() {
     const statusSummaryCleanup = socket.on('device_status_summary', (data) => {
       console.log('📈 Device status summary:', data);
 
-      // Update connected devices list
-      if (data.devices && Array.isArray(data.devices)) {
-        connectedDevices.value = data.devices;
-
-        // Update individual device statuses
-        data.devices.forEach(device => {
-          updateDeviceStatus(device.code, {
-            id: device.id,
-            name: device.description,
-            status: device.status,
-            lastSeen: new Date(device.lastSeen)
-          });
-        });
-      }
+      connectedDevices.value = data.connected;
     });
 
     // Device check result handler
@@ -134,7 +121,6 @@ export function useDeviceSocket() {
     );
   };
 
-  // NEW: Add device notification
   const addDeviceNotification = (notification) => {
     deviceNotifications.value.unshift({
       ...notification,

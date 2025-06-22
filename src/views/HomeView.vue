@@ -152,15 +152,6 @@ const updateLocationsTotal = computed(() => {
   ).length;
 });
 
-// Update deviceConnected from device composable
-const updateDeviceConnected = computed(() => {
-  if (!deviceSocket.connectedDevices.value) return 0;
-
-  return deviceSocket.connectedDevices.value.filter(device =>
-    device.status === 'CONNECTED' || deviceSocket.isDeviceOnline(device.code)
-  ).length;
-});
-
 // Watch for changes and update reactive state
 watch(updateTotalFloodLocations, (newValue) => {
   totalFloodLocations.value = newValue;
@@ -172,7 +163,7 @@ watch(updateLocationsTotal, (newValue) => {
   showLocationDataUpdate();
 }, { immediate: true });
 
-watch(updateDeviceConnected, (newValue) => {
+watch(deviceSocket.connectedDevices, (newValue) => {
   deviceConnected.value = newValue;
   showDeviceDataUpdate();
 }, { immediate: true });
