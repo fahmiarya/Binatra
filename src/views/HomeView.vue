@@ -27,51 +27,38 @@
           </div>
         </BaseCard>
 
-        <!-- Water Level Card -->
-        <BaseCard title="Jumlah Lokasi Banjir" customClass="p-6" :showTopRightArrow="true">
-          <div class="flex justify-between items-center h-full">
-            <div class="flex flex-col justify-center">
-              <div class="mt-4">
-                <span class="text-4xl font-medium text-[#516F91]">1</span>
-              </div>
+        <!-- Jumlah Lokasi Banjir -->
+        <BaseCard title="Jumlah Lokasi Banjir" customClass="scrollbar-hidden" :showTopRightArrow="true">
+          <div class="flex items-center min-h-[120px]">
+            <div class="flex flex-col">
+              <span class="text-4xl font-medium text-[#516F91]">{{ totalFloodLocations }}</span>
             </div>
           </div>
         </BaseCard>
       </div>
 
-      <!-- Baris kedua -->
+      <!-- Jumlah Device Terhubung -->
       <div class="grid grid-cols-2 gap-8">
         <!-- Device Card -->
-        <BaseCard title="Jumlah Device Terhubung" customClass="flex flex-col justify-between">
-          <div>
-            <p class="font-medium text-green-600 mt-2">Connected</p>
-            <p class="text-sm text-gray-600 mt-1">8 Connected devices</p>
-          </div>
-
-          <div class="mt-auto text-sm text-gray-600">
-            <div class="flex justify-between">
-              <div>
-                <p class="text-[#516F91] font-medium">
-                  12.54 <span class="text-gray-500 font-normal">GB sent</span>
-                </p>
-              </div>
-              <div>
-                <p class="text-green-600 font-medium">
-                  6.48 <span class="text-gray-500 font-normal">GB received</span>
-                </p>
-              </div>
+        <BaseCard title="Jumlah Device Terhubung">
+          <div class="flex items-center min-h-[120px]">
+            <div class="flex flex-col">
+              <p class="text-lg text-[#274C77] font-bold">
+                {{ deviceConnected || 0 }}
+                <span class="text-gray-500 font-normal">
+                  Connected devices
+                </span>
+              </p>
             </div>
           </div>
         </BaseCard>
 
-        <!-- Electricity Card -->
-        <BaseCard title="Electricity" customClass="relative">
-          <div class="w-full flex mt-2 space-x-2">
-            <button class="px-6 py-1 bg-gray-400 text-white rounded-md text-sm">Daily</button>
-            <button class="px-6 py-1 text-gray-600 rounded-md text-sm hover:bg-gray-200">Weekly</button>
-          </div>
-          <div class="mt-4 h-20">
-            <img src="../assets/images/stats.png" class="w-full" alt="Statistics">
+        <!-- Jumlah Lokasi Peringatan Banjir -->
+        <BaseCard title="Jumlah Lokasi Peringatan Banjir" customClass="text-sm">
+          <div class="flex items-center min-h-[120px]">
+            <div class="flex flex-col">
+              <span class="text-4xl font-medium text-[#516F91]">{{ locationsTotal }}</span>
+            </div>
           </div>
         </BaseCard>
       </div>
@@ -89,22 +76,193 @@
 import BaseCard from '@/components/BaseCard.vue';
 import BaseLayout from '@/layouts/BaseLayout.vue';
 import CloudIcon from '@/assets/images/cloud.png';
-import { reactive, onMounted } from "vue";
+import { reactive, onMounted, onUnmounted, ref, computed, watch } from "vue";
 import { listenToSensorData } from "@/socket.js";
 import { useWeatherStore } from '@/stores/weather.store';
 import { storeToRefs } from 'pinia';
 import BaseAreaChart from '@/components/BaseAreaChart.vue';
+import { useDeviceStore } from '@/stores/deviceStore';
+import { useLocationStore } from '@/stores/locationStore';
 
-const store = useWeatherStore();
-const { weather, main, location } = storeToRefs(store);
+// Import composables
+import { useFloodSocket } from '@/composables/useFloodSocket.js';
+import { useDeviceSocket } from '@/composables/useDeviceSocket.js';
 
+const weatherStore = useWeatherStore();
+const deviceStore = useDeviceStore();
+const locationStore = useLocationStore();
+const { weather, main, location } = storeToRefs(weatherStore);
+
+// Initialize composables
+const floodSocket = useFloodSocket();
+const deviceSocket = useDeviceSocket();
+
+// State (keeping original variable names)
 const sensorData = reactive({
   waterlevel: null,
   rain: null,
 });
 
+const totalFloodLocations = ref(0);
+const floodLocations = ref([]);
+const locationsTotal = ref(0);
+const deviceConnected = ref(0);
 
-onMounted(() => {
+// Real-time indicators
+const isFloodDataUpdating = ref(false);
+const isDeviceDataUpdating = ref(false);
+const isLocationDataUpdating = ref(false);
+
+// Visual feedback functions (declare before watchers)
+const showFloodDataUpdate = () => {
+  isFloodDataUpdating.value = true;
+  setTimeout(() => {
+    isFloodDataUpdating.value = false;
+  }, 2000);
+};
+
+const showDeviceDataUpdate = () => {
+  isDeviceDataUpdating.value = true;
+  setTimeout(() => {
+    isDeviceDataUpdating.value = false;
+  }, 2000);
+};
+
+const showLocationDataUpdate = () => {
+  isLocationDataUpdating.value = true;
+  setTimeout(() => {
+    isLocationDataUpdating.value = false;
+  }, 2000);
+};
+
+// Update totalFloodLocations from flood composable
+const updateTotalFloodLocations = computed(() => {
+  if (floodSocket.floodSummary.value?.totalFloodLocations) {
+    return floodSocket.floodSummary.value.totalFloodLocations;
+  }
+  return floodSocket.floodLocations.value?.length || 0;
+});
+
+// Update locationsTotal (warning locations) from flood composable
+const updateLocationsTotal = computed(() => {
+  if (!floodSocket.floodLocations.value) return 0;
+
+  return floodSocket.floodLocations.value.filter(location =>
+    ['WASPADA', 'SIAGA', 'BAHAYA'].includes(location.currentStatus)
+  ).length;
+});
+
+// Watch for changes and update reactive state
+watch(updateTotalFloodLocations, (newValue) => {
+  totalFloodLocations.value = newValue;
+  showFloodDataUpdate();
+}, { immediate: true });
+
+watch(updateLocationsTotal, (newValue) => {
+  locationsTotal.value = newValue;
+  showLocationDataUpdate();
+}, { immediate: true });
+
+watch(deviceSocket.connectedDevices, (newValue) => {
+  deviceConnected.value = newValue;
+  showDeviceDataUpdate();
+}, { immediate: true });
+
+// Watch for flood locations changes
+watch(() => floodSocket.floodLocations.value, (newLocations) => {
+  floodLocations.value = newLocations || [];
+}, { deep: true, immediate: true });
+
+// Watch for recently updated locations to show visual feedback
+watch(() => floodSocket.recentlyUpdatedLocations.value, (newUpdates) => {
+  if (newUpdates.length > 0) {
+    showFloodDataUpdate();
+  }
+});
+
+// Watch for new notifications to show visual feedback
+watch(() => floodSocket.notifications.value, (newNotifications, oldNotifications) => {
+  if (newNotifications.length > (oldNotifications?.length || 0)) {
+    const latestNotification = newNotifications[0];
+
+    // Show appropriate visual feedback based on notification type
+    if (['new_flood_location', 'location_status_change'].includes(latestNotification.type)) {
+      showFloodDataUpdate();
+      showLocationDataUpdate();
+    }
+
+    console.log('🔔 New flood notification:', latestNotification);
+  }
+}, { deep: true });
+
+watch(() => deviceSocket.deviceNotifications.value, (newNotifications, oldNotifications) => {
+  if (newNotifications.length > (oldNotifications?.length || 0)) {
+    showDeviceDataUpdate();
+
+    const latestNotification = newNotifications[0];
+    console.log('📱 New device notification:', latestNotification);
+  }
+}, { deep: true });
+
+
+
+// Load initial data from stores as fallback
+const loadInitialData = async () => {
+  try {
+    console.log('📊 Loading initial dashboard data...');
+
+    // Use composable data first, fallback to store methods if needed
+    if (!floodSocket.floodLocations.value?.length) {
+      const floodLocationList = await locationStore.getFloodLocations();
+      floodLocations.value = floodLocationList;
+    }
+
+    if (!deviceSocket.connectedDevices.value?.length) {
+      const connectedDevices = await deviceStore.getConnectedDevices();
+      deviceConnected.value = connectedDevices;
+    }
+
+    const [totalLocations, floodLocationCount] = await Promise.all([
+      locationStore.getTotalLocations(),
+      locationStore.getTotalFloodLocations()
+    ]);
+
+    // Only update if composable doesn't have data yet
+    if (!updateLocationsTotal.value) {
+      locationsTotal.value = totalLocations;
+    }
+
+    if (!updateTotalFloodLocations.value) {
+      totalFloodLocations.value = floodLocationCount;
+    }
+
+    console.log('✅ Initial dashboard data loaded:', {
+      devices: deviceConnected.value,
+      locations: locationsTotal.value,
+      floodLocations: totalFloodLocations.value
+    });
+  } catch (error) {
+    console.error('❌ Error loading initial data:', error);
+  }
+};
+
+// Lifecycle
+onMounted(async () => {
+  console.log('📊 Dashboard mounted with composables');
+  console.log('🌊 Flood socket status:', {
+    connected: floodSocket.connected.value,
+    loading: floodSocket.loading.value,
+    locationsCount: floodSocket.floodLocations.value?.length
+  });
+  console.log('📱 Device socket status:', {
+    connected: deviceSocket.connected.value,
+    devicesCount: deviceSocket.connectedDevices.value?.length
+  });
+
+  // Load initial data as fallback
+  await loadInitialData();
+
+  // Setup sensor data listener (existing)
   listenToSensorData((data) => {
     sensorData.waterlevel = data.waterlevel;
     sensorData.rain = data.rain;
@@ -112,4 +270,23 @@ onMounted(() => {
   });
 });
 
+onUnmounted(() => {
+  // Composables will handle their own cleanup
+  console.log('📊 Dashboard unmounted');
+});
 </script>
+
+<style scoped>
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style>

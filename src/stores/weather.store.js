@@ -11,7 +11,7 @@ export const useWeatherStore = defineStore('weather', () => {
   const loading = ref(false)
   const error = ref(null)
 
-  axios.defaults.baseURL = 'http://localhost:3000';
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
   // Actions
   async function fetchWeather() {
