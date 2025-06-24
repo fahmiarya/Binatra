@@ -181,12 +181,14 @@ const reverseGeocode = async (lat, lng) => {
 
     const data = await response.json()
 
+
     if (data && data.address) {
       const address = data.address
+      console.log("data dari reverse : ", address)
 
       return {
         address: data.display_name || '',
-        district: address.city_district || address.address.city_district,
+        district: address.city_district ||address.municipality,
         city: address.city,
         province: address.state,
       }
