@@ -11,6 +11,7 @@ export function useDeviceSocket() {
   const connectedDevices = ref(null);
   const recentSensorUpdates = ref([]);
   const deviceNotifications = ref([]);
+  const deviceNotificationData = ref(null)
 
   // Event handlers cleanup functions
   const cleanupFunctions = [];
@@ -54,7 +55,6 @@ export function useDeviceSocket() {
 
     // Device heartbeat handler
     const heartbeatCleanup = socket.on('device_heartbeat', (data) => {
-      console.log('💓 Device heartbeat:', data);
 
       if (data.deviceCode) {
         updateDeviceStatus(data.deviceCode, {
@@ -91,7 +91,8 @@ export function useDeviceSocket() {
     const deviceNotificationCleanup = socket.on('new-notification', (notification) => {
       // Filter device-related notifications
       if (['device_status_change', 'new_device'].includes(notification.type)) {
-        console.log('📱 Device notification received:', notification);
+        console.log('📱 Device notification received:', notification.data);
+        deviceNotificationData.value = notification.data;
         addDeviceNotification(notification);
 
         // Show browser notification for device status changes
@@ -321,6 +322,7 @@ export function useDeviceSocket() {
 
     // NEW: Device notification state
     deviceNotifications,
+    deviceNotificationData,
 
     // Methods
     subscribeToDevice,
