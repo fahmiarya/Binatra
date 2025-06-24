@@ -8,9 +8,10 @@ export function useDeviceSocket() {
   // Reactive state
   const sensorData = ref({});
   const deviceStatuses = ref(new Map());
-  const connectedDevices = ref([]);
+  const connectedDevices = ref(null);
   const recentSensorUpdates = ref([]);
   const deviceNotifications = ref([]);
+  const deviceNotificationData = ref(null)
 
   // Event handlers cleanup functions
   const cleanupFunctions = [];
@@ -54,7 +55,6 @@ export function useDeviceSocket() {
 
     // Device heartbeat handler
     const heartbeatCleanup = socket.on('device_heartbeat', (data) => {
-      console.log('💓 Device heartbeat:', data);
 
       if (data.deviceCode) {
         updateDeviceStatus(data.deviceCode, {
@@ -74,20 +74,7 @@ export function useDeviceSocket() {
     const statusSummaryCleanup = socket.on('device_status_summary', (data) => {
       console.log('📈 Device status summary:', data);
 
-      // Update connected devices list
-      if (data.devices && Array.isArray(data.devices)) {
-        connectedDevices.value = data.devices;
-
-        // Update individual device statuses
-        data.devices.forEach(device => {
-          updateDeviceStatus(device.code, {
-            id: device.id,
-            name: device.description,
-            status: device.status,
-            lastSeen: new Date(device.lastSeen)
-          });
-        });
-      }
+      connectedDevices.value = data.connected;
     });
 
     // Device check result handler
@@ -104,7 +91,8 @@ export function useDeviceSocket() {
     const deviceNotificationCleanup = socket.on('new-notification', (notification) => {
       // Filter device-related notifications
       if (['device_status_change', 'new_device'].includes(notification.type)) {
-        console.log('📱 Device notification received:', notification);
+        console.log('📱 Device notification received:', notification.data);
+        deviceNotificationData.value = notification.data;
         addDeviceNotification(notification);
 
         // Show browser notification for device status changes
@@ -134,7 +122,6 @@ export function useDeviceSocket() {
     );
   };
 
-  // NEW: Add device notification
   const addDeviceNotification = (notification) => {
     deviceNotifications.value.unshift({
       ...notification,
@@ -335,6 +322,7 @@ export function useDeviceSocket() {
 
     // NEW: Device notification state
     deviceNotifications,
+    deviceNotificationData,
 
     // Methods
     subscribeToDevice,

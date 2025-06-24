@@ -18,16 +18,23 @@
         </div>
 
         <!-- Loading indicator for notifications -->
-        <div v-if="loadingMoreNotifications" class="flex justify-center py-2">
+        <div v-if="locationStore.isLoadingHistory" class="flex justify-center py-2">
           <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
           <span class="ml-2 text-xs text-gray-500">Memuat lebih banyak...</span>
+        </div>
+
+        <!-- Error state for notifications -->
+        <div v-if="locationStore.historyError" class="text-center py-4 text-red-500 text-xs">
+          <p>Error: {{ locationStore.historyError }}</p>
+          <button @click="refreshNotifications" class="mt-2 px-3 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">
+            Coba Lagi
+          </button>
         </div>
       </div>
     </BaseCard>
 
     <!-- Alert Locations Card -->
     <BaseCard title="Lokasi Dengan Status Waspada" :hasArrow="false" customClass="flex-grow">
-
       <div class="space-y-3 mt-4 scrollbar-hidden overflow-y-auto max-h-screen" @scroll="handleLocationScroll" ref="locationScrollContainer">
 
         <!-- Location cards -->
@@ -124,7 +131,7 @@
         </div>
 
         <!-- End of data indicator -->
-        <div v-if="hasReachedEnd && floodLocations.length > 0"
+        <div v-if="locationStore.hasReachedEnd && floodNotifications.length > 0"
              class="text-center py-4 text-gray-400 text-xs">
           <p>— Semua data telah dimuat —</p>
         </div>
@@ -136,8 +143,11 @@
 <script setup>
 import BaseCard from '@/components/BaseCard.vue';
 import { useFloodSocket } from '@/composables/useFloodSocket.js';
-import { ref, onMounted, onUnmounted } from 'vue';
-import axios from 'axios';
+import { useLocationStore } from '@/stores/locationStore.js';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+
+// Store
+const locationStore = useLocationStore();
 
 // Socket composable
 const {
@@ -147,21 +157,12 @@ const {
   subscribeToLocation,
   unsubscribeFromLocation,
   formatLastUpdate,
+  currentLocationStatus,
 } = useFloodSocket();
 
 // Local state
 const subscribedLocations = ref(new Set());
-
-// API dan Infinite Scroll state
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const locationStatusHistory = ref([]);
-const loadingMoreNotifications = ref(false);
 const loadingMoreLocations = ref(false);
-const hasReachedEnd = ref(false);
-
-// Pagination state
-const currentPage = ref(1);
-const pageSize = ref(10);
 
 // Scroll containers
 const notificationScrollContainer = ref(null);
@@ -179,76 +180,23 @@ const props = defineProps({
   }
 });
 
-// Enhanced floodNotifications dengan data dari API
-const floodNotifications = ref([...props.floodNotifications]);
+// Computed - Enhanced floodNotifications dengan data dari store
+const floodNotifications = computed(() => {
+  // Combine props notifications dengan history dari store
+  const historyNotifications = locationStore.locationStatusHistory.map(history => ({
+    id: `history-${history.id}`,
+    title: formatNotificationTitle(history),
+    location: history.location?.district || history.location?.name || 'Unknown',
+    timeframe: formatTimeframe(history),
+    timeAgo: formatHistoryTime(history.changedAt),
+    severity: getSeverityFromStatus(history.newStatus),
+    type: 'status_change',
+    waterLevel: history.waterLevel,
+    rainfall: history.rainfall
+  }));
 
-// Fetch Location Status History
-const fetchLocationStatusHistory = async (page = 1, limit = 10) => {
-  try {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      sortBy: 'changedAt',
-      sortOrder: 'desc'
-    });
-
-    console.log(`🔍 Fetching location status history - Page: ${page}, Limit: ${limit}`);
-
-    const response = await axios.get(`${API_BASE_URL}/api/v1/locations/location-status-history?${params.toString()}`);
-
-    if (response.data.success) {
-      const newData = response.data.data;
-
-      if (page === 1) {
-        // Reset data jika halaman pertama
-        locationStatusHistory.value = newData;
-      } else {
-        // Append data untuk infinite scroll
-        locationStatusHistory.value.push(...newData);
-      }
-
-      // Convert to notifications format dan tambahkan ke floodNotifications
-      const newNotifications = newData.map(history => ({
-        id: `history-${history.id}`,
-        title: formatNotificationTitle(history),
-        location: history.location?.district || history.location?.name || 'Unknown',
-        timeframe: formatTimeframe(history),
-        timeAgo: formatHistoryTime(history.changedAt),
-        severity: getSeverityFromStatus(history.newStatus),
-        type: 'status_change',
-        waterLevel: history.waterLevel,
-        rainfall: history.rainfall
-      }));
-
-      if (page === 1) {
-        // Replace notifications untuk halaman pertama
-        floodNotifications.value = [...props.floodNotifications, ...newNotifications];
-      } else {
-        // Append untuk infinite scroll
-        floodNotifications.value.push(...newNotifications);
-      }
-
-      // Check if reached end
-      hasReachedEnd.value = !response.data.pagination?.hasNextPage;
-
-      console.log(`✅ Fetched ${newData.length} history items. Total: ${locationStatusHistory.value.length}`);
-
-      return {
-        success: true,
-        data: newData,
-        pagination: response.data.pagination
-      };
-
-    } else {
-      console.error('❌ Failed to fetch location status history:', response.data.error);
-      return { success: false, error: response.data.error };
-    }
-
-  } catch (error) {
-    console.error('❌ Error fetching location status history:', error);
-    return { success: false, error: error.message };
-  }
-};
+  return [...props.floodNotifications, ...historyNotifications];
+});
 
 // Infinite Scroll Handlers
 const handleNotificationScroll = async (event) => {
@@ -257,7 +205,7 @@ const handleNotificationScroll = async (event) => {
 
   // Check if near bottom (within 100px)
   if (scrollTop + clientHeight >= scrollHeight - 100) {
-    if (!loadingMoreNotifications.value && !hasReachedEnd.value) {
+    if (!locationStore.isLoadingHistory && !locationStore.hasReachedEnd) {
       await loadMoreNotifications();
     }
   }
@@ -269,32 +217,25 @@ const handleLocationScroll = async (event) => {
 
   // Check if near bottom (within 100px)
   if (scrollTop + clientHeight >= scrollHeight - 100) {
-    if (!loadingMoreLocations.value && !hasReachedEnd.value) {
+    if (!loadingMoreLocations.value) {
       await loadMoreLocations();
     }
   }
 };
 
 const loadMoreNotifications = async () => {
-  if (loadingMoreNotifications.value || hasReachedEnd.value) return;
-
-  loadingMoreNotifications.value = true;
-  currentPage.value += 1;
-
-  console.log(`📄 Loading more notifications - Page: ${currentPage.value}`);
-
   try {
-    await fetchLocationStatusHistory(currentPage.value, pageSize.value);
+    const success = await locationStore.loadMoreHistory();
+    if (!success) {
+      console.error('Failed to load more notifications');
+    }
   } catch (error) {
     console.error('Error loading more notifications:', error);
-    currentPage.value -= 1; // Rollback page number
-  } finally {
-    loadingMoreNotifications.value = false;
   }
 };
 
 const loadMoreLocations = async () => {
-  if (loadingMoreLocations.value || hasReachedEnd.value) return;
+  if (loadingMoreLocations.value) return;
 
   loadingMoreLocations.value = true;
 
@@ -313,6 +254,15 @@ const loadMoreLocations = async () => {
     console.error('Error loading more locations:', error);
   } finally {
     loadingMoreLocations.value = false;
+  }
+};
+
+// Refresh notifications
+const refreshNotifications = async () => {
+  try {
+    await locationStore.refreshHistory();
+  } catch (error) {
+    console.error('Error refreshing notifications:', error);
   }
 };
 
@@ -461,14 +411,26 @@ const calculateProgress = (location) => {
   return Math.min(progress, 100);
 };
 
+// Watch untuk real-time updates
+watch(() => currentLocationStatus.value, (newValue) => {
+  if (!newValue) return;
+
+  // Tambahkan ke store history
+  locationStore.addHistoryItem(newValue);
+
+  console.log('📡 Real-time update received and added to store:', newValue);
+}, {
+  immediate: true
+});
+
 // Lifecycle
 onMounted(async () => {
   console.log('🚀 Component mounted - Loading initial data');
 
-  // Load initial data
-  await fetchLocationStatusHistory(1, pageSize.value);
+  // Load initial data from store
+  await locationStore.fetchLocationStatusHistory(1, locationStore.pageSize);
 
-  console.log('✅ Initial data loaded');
+  console.log('✅ Initial data loaded from store');
 });
 
 // Cleanup

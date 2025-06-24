@@ -152,15 +152,6 @@ const updateLocationsTotal = computed(() => {
   ).length;
 });
 
-// Update deviceConnected from device composable
-const updateDeviceConnected = computed(() => {
-  if (!deviceSocket.connectedDevices.value) return 0;
-
-  return deviceSocket.connectedDevices.value.filter(device =>
-    device.status === 'CONNECTED' || deviceSocket.isDeviceOnline(device.code)
-  ).length;
-});
-
 // Watch for changes and update reactive state
 watch(updateTotalFloodLocations, (newValue) => {
   totalFloodLocations.value = newValue;
@@ -172,7 +163,7 @@ watch(updateLocationsTotal, (newValue) => {
   showLocationDataUpdate();
 }, { immediate: true });
 
-watch(updateDeviceConnected, (newValue) => {
+watch(deviceSocket.connectedDevices, (newValue) => {
   deviceConnected.value = newValue;
   showDeviceDataUpdate();
 }, { immediate: true });
@@ -193,23 +184,17 @@ watch(() => floodSocket.recentlyUpdatedLocations.value, (newUpdates) => {
 watch(() => floodSocket.notifications.value, (newNotifications, oldNotifications) => {
   if (newNotifications.length > (oldNotifications?.length || 0)) {
     const latestNotification = newNotifications[0];
-
     // Show appropriate visual feedback based on notification type
     if (['new_flood_location', 'location_status_change'].includes(latestNotification.type)) {
       showFloodDataUpdate();
       showLocationDataUpdate();
     }
-
-    console.log('🔔 New flood notification:', latestNotification);
   }
 }, { deep: true });
 
 watch(() => deviceSocket.deviceNotifications.value, (newNotifications, oldNotifications) => {
   if (newNotifications.length > (oldNotifications?.length || 0)) {
     showDeviceDataUpdate();
-
-    const latestNotification = newNotifications[0];
-    console.log('📱 New device notification:', latestNotification);
   }
 }, { deep: true });
 
@@ -244,12 +229,6 @@ const loadInitialData = async () => {
     if (!updateTotalFloodLocations.value) {
       totalFloodLocations.value = floodLocationCount;
     }
-
-    console.log('✅ Initial dashboard data loaded:', {
-      devices: deviceConnected.value,
-      locations: locationsTotal.value,
-      floodLocations: totalFloodLocations.value
-    });
   } catch (error) {
     console.error('❌ Error loading initial data:', error);
   }
@@ -257,17 +236,6 @@ const loadInitialData = async () => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('📊 Dashboard mounted with composables');
-  console.log('🌊 Flood socket status:', {
-    connected: floodSocket.connected.value,
-    loading: floodSocket.loading.value,
-    locationsCount: floodSocket.floodLocations.value?.length
-  });
-  console.log('📱 Device socket status:', {
-    connected: deviceSocket.connected.value,
-    devicesCount: deviceSocket.connectedDevices.value?.length
-  });
-
   // Load initial data as fallback
   await loadInitialData();
 

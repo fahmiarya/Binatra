@@ -1,8 +1,29 @@
+<script setup>
+import { ref } from 'vue'
+import { createPopper } from '@popperjs/core'
+
+const dropdownPopoverShow = ref(false)
+const btnDropdownRef = ref(null)
+const popoverDropdownRef = ref(null)
+
+const toggleDropdown = (event) => {
+  event.preventDefault()
+  if (dropdownPopoverShow.value) {
+    dropdownPopoverShow.value = false
+  } else {
+    dropdownPopoverShow.value = true
+    createPopper(btnDropdownRef.value, popoverDropdownRef.value, {
+      placement: 'bottom-start',
+    })
+  }
+}
+</script>
+
 <template>
   <header class="w-full bg-white shadow p-4 z-10">
     <div class="w-full flex justify-between items-center">
       <div class="flex items-center justify-between w-[30%]">
-        <img src="../../assets/images/binatra.jpeg" alt="Binatra Logo" class="h-10 mr-3">
+        <img src="../../assets/images/binatra.jpeg" alt="Binatra Logo" class="h-10 mr-3" />
         <div class="flex gap-x-2 items-center">
           <p class="text-[#274C77] ml-4">11:13 PM</p>
           <p class="text-[#274C77] ml-2">Rabu, 29 January, 2025</p>
@@ -10,9 +31,30 @@
       </div>
       <div class="flex items-center">
         <h1 class="mr-10 text-[#274C77]">Dashboard Monitoring Banjir</h1>
-        <span class="mr-2 text-[#274C77]">Hi Binatra</span>
+
+        <div class="relative mr-4">
+          <button
+            class="flex items-center text-[#274C77]"
+            @click="toggleDropdown"
+            ref="btnDropdownRef"
+          >
+            <i class="fa-solid fa-caret-down mr-2"></i>
+            <span>Hi Binatra</span>
+          </button>
+
+          <!-- ⬇️ Dropdown Menu -->
+          <div
+            ref="popoverDropdownRef"
+            v-show="dropdownPopoverShow"
+            class="z-50 bg-white text-sm text-left shadow rounded mt-2 py-2 min-w-[10rem] border"
+          >
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Profil</a>
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Pengaturan</a>
+            <a href="/" class="block px-4 py-2 hover:bg-gray-100">Logout</a>
+          </div>
+        </div>
         <div class="rounded-full bg-gray-300 overflow-hidden">
-          <img src="../../assets/images/user.png" alt="User Avatar">
+          <img src="../../assets/images/user.png" alt="User Avatar" />
         </div>
         <button class="ml-4">
           <i class="fa-solid fa-arrow-right-from-bracket"></i>
