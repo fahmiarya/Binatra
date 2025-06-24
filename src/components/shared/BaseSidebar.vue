@@ -4,7 +4,7 @@
       <nav class="space-y-1">
         <!-- Dashboard Link -->
         <router-link
-          to="/home"
+          to="/"
           class="flex items-center p-3 pl-5 rounded-e-full transition-all duration-200"
           :class="isActive('/') ? 'bg-[#274C77] text-white' : 'text-gray-700 hover:bg-gray-100'"
         >
@@ -68,17 +68,17 @@ const locations = [
     route: '/pemerintah-kota',
   },
   {
-    name: 'Dinas Pekerjaan Umum (PU)',
+    name: 'Dinas PU',
     route: '/dinas-pekerjaan-umum',
   },
-  {
-    name: 'Dinas Perhubungan (Dishub)',
-    route: '/dinas-perhubungan',
-  },
-  {
-    name: 'BPBD Jawa Timur',
-    route: '/bpbd-jawa-timur',
-  },
+  // {
+  //   name: 'Dinas Perhubungan (Dishub)',
+  //   route: '/dinas-perhubungan',
+  // },
+  // {
+  //   name: 'BPBD Jawa Timur',
+  //   route: '/bpbd-jawa-timur',
+  // },
 ]
 
 // Function to check if current route is active

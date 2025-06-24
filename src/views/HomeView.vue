@@ -199,7 +199,6 @@ watch(() => deviceSocket.deviceNotifications.value, (newNotifications, oldNotifi
 }, { deep: true });
 
 
-
 // Load initial data from stores as fallback
 const loadInitialData = async () => {
   try {
