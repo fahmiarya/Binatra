@@ -20,6 +20,71 @@ export const useLocationStore = defineStore('locations', () => {
 
   axios.defaults.baseURL = import.meta.env.VITE_API_URL
 
+  // Get all locations
+  const getAllLocations = async () => {
+    try {
+      isLoading.value = true
+      error.value = null
+
+      const response = await axios.get('/api/v1/locations')
+
+      if (response.data.success) {
+        locations.value = response.data.data
+      } else {
+        error.value = response.data.message || 'Gagal mengambil data lokasi'
+      }
+
+    } catch (err) {
+      error.value = 'Gagal mengambil data lokasi'
+      console.error('Error fetching locations:', err)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Create new location
+  const createLocation = async (locationData) => {
+    try {
+      isLoading.value = true
+      error.value = null
+
+      const response = await axios.post('/api/v1/locations', locationData)
+
+      if (response.data.success) {
+        // Refresh locations after create
+        await getAllLocations()
+        return response.data.data
+      } else {
+        error.value = response.data.message || 'Gagal membuat lokasi baru'
+        throw new Error(response.data.message)
+      }
+
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Gagal membuat lokasi baru'
+      console.error('Error creating location:', err)
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Search locations (filter from current data)
+  const searchLocations = async (query) => {
+    if (!query.trim()) {
+      await getAllLocations()
+      return
+    }
+
+    const filteredLocations = locations.value.filter(location =>
+      location.name.toLowerCase().includes(query.toLowerCase()) ||
+      location.address.toLowerCase().includes(query.toLowerCase()) ||
+      location.district.toLowerCase().includes(query.toLowerCase()) ||
+      location.city.toLowerCase().includes(query.toLowerCase())
+    )
+
+    locations.value = filteredLocations
+  }
+
   const getTotalLocations = async () => {
     try {
       const response = await axios.get('/api/v1/locations/total')
@@ -164,6 +229,9 @@ export const useLocationStore = defineStore('locations', () => {
     totalHistory,
 
     // Actions
+    getAllLocations,
+    createLocation,
+    searchLocations,
     getTotalLocations,
     getFloodLocations,
     getTotalFloodLocations,
