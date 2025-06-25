@@ -42,7 +42,7 @@ const toggleDropdown = (event) => {
             <span>Hi Binatra</span>
           </button>
 
-          <!-- ⬇️ Dropdown Menu -->
+          <!-- ⬇ Dropdown Menu -->
           <div
             ref="popoverDropdownRef"
             v-show="dropdownPopoverShow"

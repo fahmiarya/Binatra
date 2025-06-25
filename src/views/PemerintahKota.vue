@@ -264,12 +264,19 @@ const batalForm = () => {
   newMarker.value = null
 }
 
+let debounceTimer: number | undefined
+
 watch(searchQuery, (newVal) => {
-  if (newVal.trim().length >= 3) {
-    searchLocation()
-  } else {
+  clearTimeout(debounceTimer) // Reset timer setiap kali user mengetik lagi
+
+  if (newVal.trim().length < 3) {
     searchResults.value = []
+    return
   }
+
+  debounceTimer = window.setTimeout(() => {
+    searchLocation()
+  }, 500) // Delay 500ms setelah user berhenti mengetik
 })
 
 onMounted(loadLocations)
