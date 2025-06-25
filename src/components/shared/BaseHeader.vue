@@ -79,9 +79,12 @@ onUnmounted(() => {
             <span>Hi Binatra</span>
           </button>
 
-          <!-- ⬇️ Dropdown Menu -->
-          <div ref="popoverDropdownRef" v-show="dropdownPopoverShow"
-            class="z-50 bg-white text-sm text-left shadow rounded mt-2 py-2 min-w-[10rem] border">
+          <!-- ⬇ Dropdown Menu -->
+          <div
+            ref="popoverDropdownRef"
+            v-show="dropdownPopoverShow"
+            class="z-50 bg-white text-sm text-left shadow rounded mt-2 py-2 min-w-[10rem] border"
+          >
             <a href="#" class="block px-4 py-2 hover:bg-gray-100">Profil</a>
             <a href="#" class="block px-4 py-2 hover:bg-gray-100">Pengaturan</a>
             <a href="/" class="block px-4 py-2 hover:bg-gray-100">Logout</a>

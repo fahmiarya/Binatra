@@ -126,6 +126,7 @@ const searchResults = ref([])
 const isSearching = ref(false)
 const mapRef = ref(null)
 
+
 const searchLocation = async () => {
   if (searchQuery.value.trim().length < 3) {
     searchResults.value = []
@@ -256,6 +257,7 @@ const showSuccessToast = (msg) => {
   toast.success(msg, { autoClose: 3000, position: 'top-right' })
 }
 
+
 const showErrorToast = (msg) => {
   toast.error(msg, { autoClose: 3000, position: 'top-right' })
 }
@@ -265,12 +267,19 @@ const batalForm = () => {
   newMarker.value = null
 }
 
+let debounceTimer;
+
 watch(searchQuery, (newVal) => {
-  if (newVal.trim().length >= 3) {
-    searchLocation()
-  } else {
+  clearTimeout(debounceTimer) // Reset timer setiap kali user mengetik lagi
+
+  if (newVal.trim().length < 3) {
     searchResults.value = []
+    return
   }
+
+  debounceTimer = window.setTimeout(() => {
+    searchLocation()
+  }, 500) // Delay 500ms setelah user berhenti mengetik
 })
 
 onMounted(loadLocations)
