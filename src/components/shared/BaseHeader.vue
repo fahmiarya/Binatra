@@ -1,21 +1,31 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { createPopper } from '@popperjs/core'
+import { useAccountStore } from '@/stores/accountStore'
+import { useRouter } from 'vue-router'
 
 const dropdownPopoverShow = ref(false)
 const btnDropdownRef = ref(null)
 const popoverDropdownRef = ref(null)
 
+const accountStore = useAccountStore()
+const router = useRouter()
+
+const userName = computed(() => accountStore.user?.name || 'Pengguna')
+
 const toggleDropdown = (event) => {
   event.preventDefault()
+  dropdownPopoverShow.value = !dropdownPopoverShow.value
   if (dropdownPopoverShow.value) {
-    dropdownPopoverShow.value = false
-  } else {
-    dropdownPopoverShow.value = true
     createPopper(btnDropdownRef.value, popoverDropdownRef.value, {
       placement: 'bottom-start',
     })
   }
+}
+
+const handleLogout = () => {
+  accountStore.logout()
+  router.push('/')
 }
 </script>
 
@@ -39,7 +49,7 @@ const toggleDropdown = (event) => {
             ref="btnDropdownRef"
           >
             <i class="fa-solid fa-caret-down mr-2"></i>
-            <span>Hi Binatra</span>
+            <span>Hi {{ userName }}</span>
           </button>
 
           <!-- ⬇ Dropdown Menu -->
@@ -50,13 +60,15 @@ const toggleDropdown = (event) => {
           >
             <a href="#" class="block px-4 py-2 hover:bg-gray-100">Profil</a>
             <a href="#" class="block px-4 py-2 hover:bg-gray-100">Pengaturan</a>
-            <a href="/" class="block px-4 py-2 hover:bg-gray-100">Logout</a>
+            <a href="#" class="block px-4 py-2 hover:bg-gray-100" @click.prevent="handleLogout"
+              >Logout</a
+            >
           </div>
         </div>
         <div class="rounded-full bg-gray-300 overflow-hidden">
           <img src="../../assets/images/user.png" alt="User Avatar" />
         </div>
-        <button class="ml-4">
+        <button class="ml-4 cursor-pointer" @click="handleLogout">
           <i class="fa-solid fa-arrow-right-from-bracket"></i>
         </button>
       </div>

@@ -1,5 +1,49 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import BaseHeader from '@/components/shared/BaseHeader.vue'
+import { useAccountStore } from '@/stores/accountStore'
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const accountStore = useAccountStore()
+
+const formData = ref({
+  name: '',
+  email: '',
+  username: '',
+  password: '',
+})
+
+const register = async () => {
+  if (
+    !formData.value.name ||
+    !formData.value.email ||
+    !formData.value.username ||
+    !formData.value.password
+  ) {
+    showErrToast('Pendaftaran gagal. Semua field harus diisi.')
+    return
+  }
+
+  try {
+    await accountStore.register(formData.value)
+    showSuccessToast('Pendaftaran berhasil!')
+    router.push('/')
+  } catch (err) {
+    console.error(err)
+    showErrToast('Pendaftaran gagal. Silakan coba lagi.')
+  }
+}
+
+const showSuccessToast = (msg: string) => {
+  toast.success(msg, { autoClose: 3000, position: 'top-right' })
+}
+
+const showErrToast = (msg: string) => {
+  toast.error(msg, { autoClose: 3000, position: 'top-right' })
+}
 </script>
 
 <template>
@@ -143,6 +187,7 @@ import BaseHeader from '@/components/shared/BaseHeader.vue'
                   <div class="mb-4">
                     <input
                       type="text"
+                      v-model="formData.name"
                       class="text-sm focus:shadow-soft-primary-outline leading-5.6 ease-soft block w-full appearance-none rounded-lg border border-solid border-gray-300 bg-white bg-clip-padding py-2 px-3 font-normal text-gray-700 transition-all focus:border-fuchsia-300 focus:bg-white focus:text-gray-700 focus:outline-none focus:transition-shadow"
                       placeholder="Name"
                       aria-label="Name"
@@ -152,6 +197,7 @@ import BaseHeader from '@/components/shared/BaseHeader.vue'
                   <div class="mb-4">
                     <input
                       type="email"
+                      v-model="formData.email"
                       class="text-sm focus:shadow-soft-primary-outline leading-5.6 ease-soft block w-full appearance-none rounded-lg border border-solid border-gray-300 bg-white bg-clip-padding py-2 px-3 font-normal text-gray-700 transition-all focus:border-fuchsia-300 focus:bg-white focus:text-gray-700 focus:outline-none focus:transition-shadow"
                       placeholder="Email"
                       aria-label="Email"
@@ -160,14 +206,25 @@ import BaseHeader from '@/components/shared/BaseHeader.vue'
                   </div>
                   <div class="mb-4">
                     <input
+                      type="text"
+                      v-model="formData.username"
+                      class="text-sm focus:shadow-soft-primary-outline leading-5.6 ease-soft block w-full appearance-none rounded-lg border border-solid border-gray-300 bg-white bg-clip-padding py-2 px-3 font-normal text-gray-700 transition-all focus:border-fuchsia-300 focus:bg-white focus:text-gray-700 focus:outline-none focus:transition-shadow"
+                      placeholder="Username"
+                      aria-label="Username"
+                      aria-describedby="email-addon"
+                    />
+                  </div>
+                  <div class="mb-4">
+                    <input
                       type="password"
+                      v-model="formData.password"
                       class="text-sm focus:shadow-soft-primary-outline leading-5.6 ease-soft block w-full appearance-none rounded-lg border border-solid border-gray-300 bg-white bg-clip-padding py-2 px-3 font-normal text-gray-700 transition-all focus:border-fuchsia-300 focus:bg-white focus:text-gray-700 focus:outline-none focus:transition-shadow"
                       placeholder="Password"
                       aria-label="Password"
                       aria-describedby="password-addon"
                     />
                   </div>
-                  <div class="min-h-6 pl-6.92 mb-0.5 block">
+                  <!-- <div class="min-h-6 pl-6.92 mb-0.5 block">
                     <input
                       id="terms"
                       class="w-4.92 h-4.92 ease-soft -ml-6.92 rounded-1.4 checked:bg-gradient-to-tl checked:from-gray-900 checked:to-slate-800 after:text-xxs after:font-awesome after:duration-250 after:ease-soft-in-out duration-250 relative float-left mt-1 cursor-pointer appearance-none border border-solid border-slate-200 bg-white bg-contain bg-center bg-no-repeat align-top transition-all after:absolute after:flex after:h-full after:w-full after:items-center after:justify-center after:text-white after:opacity-0 after:transition-all after:content-['\f00c'] checked:border-0 checked:border-transparent checked:bg-transparent checked:after:opacity-100"
@@ -184,11 +241,12 @@ import BaseHeader from '@/components/shared/BaseHeader.vue'
                         >syarat dan Ketentuan</a
                       >
                     </label>
-                  </div>
+                  </div> -->
                   <div class="text-center">
                     <button
                       type="button"
                       class="inline-block w-full px-6 py-3 mt-6 mb-2 font-bold text-center text-white uppercase align-middle transition-all bg-transparent border-0 rounded-lg cursor-pointer active:opacity-85 hover:scale-102 hover:shadow-soft-xs leading-pro text-xs ease-soft-in tracking-tight-soft shadow-soft-md bg-150 bg-x-25 bg-gradient-to-tl from-gray-900 to-slate-800 hover:border-slate-700 hover:bg-slate-700 hover:text-white"
+                      @click="register"
                     >
                       Sign up
                     </button>
