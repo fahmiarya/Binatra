@@ -145,6 +145,7 @@ const updateTotalFloodLocations = computed(() => {
 
 // Update locationsTotal (warning locations) from flood composable
 const updateLocationsTotal = computed(() => {
+  console.log("total titik lokasi update : ", floodSocket.floodLocations.value)
   if (!floodSocket.floodLocations.value) return 0;
 
   return floodSocket.floodLocations.value.filter(location =>
@@ -156,11 +157,6 @@ const updateLocationsTotal = computed(() => {
 watch(updateTotalFloodLocations, (newValue) => {
   totalFloodLocations.value = newValue;
   showFloodDataUpdate();
-}, { immediate: true });
-
-watch(updateLocationsTotal, (newValue) => {
-  locationsTotal.value = newValue;
-  showLocationDataUpdate();
 }, { immediate: true });
 
 watch(deviceSocket.connectedDevices, (newValue) => {
@@ -202,7 +198,6 @@ watch(() => deviceSocket.deviceNotifications.value, (newNotifications, oldNotifi
 // Load initial data from stores as fallback
 const loadInitialData = async () => {
   try {
-    console.log('📊 Loading initial dashboard data...');
 
     // Use composable data first, fallback to store methods if needed
     if (!floodSocket.floodLocations.value?.length) {
@@ -244,11 +239,6 @@ onMounted(async () => {
     sensorData.rain = data.rain;
     sensorData.buzzerState = data.buzzerState;
   });
-});
-
-onUnmounted(() => {
-  // Composables will handle their own cleanup
-  console.log('📊 Dashboard unmounted');
 });
 </script>
 
