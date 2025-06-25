@@ -240,21 +240,20 @@ const onMapReady = () => {
     `)
 
     div.innerHTML = `
-          <h4>Keterangan Marker</h4>
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <img src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png" width="15" style="vertical-align: middle;">
-            <span>Aman</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <img src="${warningSvg}" width="15" style="vertical-align: middle;">
-            <span>Waspada / Siaga</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <img src="${dangerSvg}" width="15" style="vertical-align: middle;">
-            <span>Bahaya</span>
-          </div>
-        `;
-
+        <h4>Keterangan Marker</h4>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <img src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png" width="15" style="vertical-align: middle;">
+          <span>Aman</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <img src="${warningSvg}" width="15" style="vertical-align: middle;">
+          <span>Waspada / Siaga</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <img src="${dangerSvg}" width="15" style="vertical-align: middle;">
+          <span>Bahaya</span>
+        </div>
+      `;
     return div
   }
 
@@ -570,15 +569,17 @@ onMounted(async () => {
       <div class="w-full h-screen relative z-0">
         <LMap
           ref="mapRef"
-          :zoom="13"
+          :zoom="11"
           :center="center"
           class="h-full w-full"
           @ready="onMapReady"
           @click="handleMapClick"
         >
           <LTileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="© OpenStreetMap contributors"
+            url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+            attribution="© OpenTopoMap contributors"
+            :max-zoom="18"
+            :min-zoom="3"
           />
 
           <!-- Marker lokasi dengan validLocations dari store -->
