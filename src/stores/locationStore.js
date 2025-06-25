@@ -20,69 +20,68 @@ export const useLocationStore = defineStore('locations', () => {
 
   axios.defaults.baseURL = import.meta.env.VITE_API_URL
 
-  // Get all locations
-  const getAllLocations = async () => {
+  // Ambil semua lokasi
+  const fetchAllLocations = async () => {
     try {
-      isLoading.value = true
-      error.value = null
-
-      const response = await axios.get('/api/v1/locations')
-
-      if (response.data.success) {
-        locations.value = response.data.data
-      } else {
-        error.value = response.data.message || 'Gagal mengambil data lokasi'
-      }
-
-    } catch (err) {
-      error.value = 'Gagal mengambil data lokasi'
-      console.error('Error fetching locations:', err)
-    } finally {
-      isLoading.value = false
+      const res = await axios.get('/api/v1/locations')
+      locations.value = res.data.data
+    } catch (error) {
+      console.error('❌ Gagal ambil lokasi:', error)
     }
   }
 
-  // Create new location
+  // Hapus lokasi
+  const removeLocation = async (id) => {
+    try {
+      await axios.delete(`/api/v1/locations/${id}`)
+      await fetchAllLocations()
+    } catch (error) {
+      console.error('❌ Gagal hapus lokasi:', error)
+      throw error
+    }
+  }
+
+  // Tambah lokasi baru
   const createLocation = async (locationData) => {
     try {
-      isLoading.value = true
-      error.value = null
-
-      const response = await axios.post('/api/v1/locations', locationData)
-
-      if (response.data.success) {
-        // Refresh locations after create
-        await getAllLocations()
-        return response.data.data
-      } else {
-        error.value = response.data.message || 'Gagal membuat lokasi baru'
-        throw new Error(response.data.message)
-      }
-
-    } catch (err) {
-      error.value = err.response?.data?.message || 'Gagal membuat lokasi baru'
-      console.error('Error creating location:', err)
-      throw err
-    } finally {
-      isLoading.value = false
+      await axios.post('/api/v1/locations', locationData)
+      await fetchAllLocations()
+    } catch (error) {
+      console.error('❌ Gagal tambah lokasi:', error)
+      throw error
     }
   }
 
-  // Search locations (filter from current data)
-  const searchLocations = async (query) => {
-    if (!query.trim()) {
-      await getAllLocations()
-      return
+  const updateLocation = async (id, payload) => {
+    try {
+      await axios.put(`/api/v1/locations/${id}`, payload)
+      await fetchAllLocations()
+    } catch (err) {
+      console.error('❌ Gagal update lokasi:', err)
+      throw err
     }
+  }
 
-    const filteredLocations = locations.value.filter(location =>
-      location.name.toLowerCase().includes(query.toLowerCase()) ||
-      location.address.toLowerCase().includes(query.toLowerCase()) ||
-      location.district.toLowerCase().includes(query.toLowerCase()) ||
-      location.city.toLowerCase().includes(query.toLowerCase())
-    )
-
-    locations.value = filteredLocations
+  // Reverse Geocode (biar reusable)
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=id`,
+      )
+      const data = await response.json()
+      if (data && data.address) {
+        const address = data.address
+        return {
+          address: data.display_name || '',
+          district: address.city_district || address.suburb || address.village || '',
+          city: address.city || address.county || '',
+          province: address.state || '',
+        }
+      }
+      return { address: '', district: '', city: '', province: '' }
+    } catch (error) {
+      return { address: '', district: '', city: '', province: '' }
+    }
   }
 
   const getTotalLocations = async () => {
@@ -124,10 +123,12 @@ export const useLocationStore = defineStore('locations', () => {
         page: page.toString(),
         limit: limit.toString(),
         sortBy: 'changedAt',
-        sortOrder: 'desc'
+        sortOrder: 'desc',
       })
 
-      const response = await axios.get(`/api/v1/locations/location-status-history?${params.toString()}`)
+      const response = await axios.get(
+        `/api/v1/locations/location-status-history?${params.toString()}`,
+      )
 
       if (response.data.success) {
         const newData = response.data.data
@@ -147,20 +148,20 @@ export const useLocationStore = defineStore('locations', () => {
         hasReachedEnd.value = !pagination?.hasNextPage
         totalHistory.value = pagination?.total || newData.length
 
-        console.log(`✅ Fetched ${newData.length} history items. Total: ${locationStatusHistory.value.length}`)
+        console.log(
+          `✅ Fetched ${newData.length} history items. Total: ${locationStatusHistory.value.length}`,
+        )
 
         return {
           success: true,
           data: newData,
-          pagination
+          pagination,
         }
-
       } else {
         historyError.value = response.data.error
         console.error('❌ Failed to fetch location status history:', response.data.error)
         return { success: false, error: response.data.error }
       }
-
     } catch (error) {
       historyError.value = error.message
       console.error('❌ Error fetching location status history:', error)
@@ -207,7 +208,7 @@ export const useLocationStore = defineStore('locations', () => {
 
   // Get history by location ID
   const getHistoryByLocationId = (locationId) => {
-    return locationStatusHistory.value.filter(item => item.locationId === locationId)
+    return locationStatusHistory.value.filter((item) => item.locationId === locationId)
   }
 
   // Get recent history (last N items)
@@ -229,9 +230,6 @@ export const useLocationStore = defineStore('locations', () => {
     totalHistory,
 
     // Actions
-    getAllLocations,
-    createLocation,
-    searchLocations,
     getTotalLocations,
     getFloodLocations,
     getTotalFloodLocations,
@@ -241,6 +239,11 @@ export const useLocationStore = defineStore('locations', () => {
     addHistoryItem,
     clearHistory,
     getHistoryByLocationId,
-    getRecentHistory
+    getRecentHistory,
+    fetchAllLocations,
+    removeLocation,
+    createLocation,
+    updateLocation,
+    reverseGeocode,
   }
 })
