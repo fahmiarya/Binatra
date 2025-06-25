@@ -1,15 +1,18 @@
 import './assets/main.css'
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import VueApexCharts from "vue3-apexcharts";
-
+import pinia from './pinia' // ← Import yang sama
+import VueApexCharts from 'vue3-apexcharts'
+import { setupInterceptors } from './lib/axiosInterceptors'
 import App from './App.vue'
 import router from './router'
 
 const app = createApp(App)
 
-app.use(createPinia())
+// Setup axios interceptors
+setupInterceptors()
+
+app.use(pinia)
 app.use(router)
-app.use(VueApexCharts);
+app.use(VueApexCharts)
 
 app.mount('#app')
