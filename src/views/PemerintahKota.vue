@@ -318,7 +318,7 @@ const pickSearchedLocation = (item) => {
   })
 
   if (mapRef.value?.leafletObject) {
-    mapRef.value.leafletObject.flyTo([item.lat, item.lon], 18, {
+    mapRef.value.leafletObject.flyTo([item.lat, item.lon], 16, {
       duration: 1.5,
     })
   }
@@ -578,7 +578,7 @@ onMounted(async () => {
           <LTileLayer
             url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
             attribution="© OpenTopoMap contributors"
-            :max-zoom="18"
+            :max-zoom="16"
             :min-zoom="3"
           />
 
