@@ -1,6 +1,6 @@
 // src/stores/locationStore.js
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 
 export const useLocationStore = defineStore('locations', () => {
@@ -20,13 +20,227 @@ export const useLocationStore = defineStore('locations', () => {
 
   axios.defaults.baseURL = import.meta.env.VITE_API_URL
 
+  // ===== FUNCTIONS YANG DIPINDAHKAN DARI COMPONENT =====
+
+  // Status normalization and helpers
+  const normalizeStatus = (apiStatus) => {
+    if (!apiStatus) return 'normal'
+
+    const status = apiStatus.toLowerCase()
+    switch (status) {
+      case 'aman':
+        return 'normal'
+      case 'waspada':
+      case 'siaga':
+        return 'warning'
+      case 'bahaya':
+        return 'danger'
+      default:
+        return 'normal'
+    }
+  }
+
+  const getStatusColor = (status) => {
+    const normalizedStatus = normalizeStatus(status)
+
+    switch (normalizedStatus) {
+      case 'normal':
+        return 'text-green-600'
+      case 'warning':
+        return 'text-orange-600'
+      case 'danger':
+        return 'text-red-600'
+      default:
+        return 'text-gray-600'
+    }
+  }
+
+  const getStatusText = (status) => {
+    if (!status) return 'Tidak Diketahui'
+
+    const apiStatus = status.toUpperCase()
+    switch (apiStatus) {
+      case 'AMAN':
+        return 'Aman'
+      case 'WASPADA':
+        return 'Waspada'
+      case 'SIAGA':
+        return 'Siaga'
+      case 'BAHAYA':
+        return 'Bahaya'
+      default:
+        return status
+    }
+  }
+
+  // Date formatting utility
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Tidak ada data'
+
+    const date = new Date(dateString)
+    return date.toLocaleString('id-ID', {
+      dateStyle: 'long',
+      timeStyle: 'short',
+    })
+  }
+
+  // Location search using OpenStreetMap
+  const searchLocation = async (query) => {
+    if (!query.trim() || query.length < 3) {
+      return []
+    }
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=id`
+      )
+
+      if (!response.ok) {
+        throw new Error('Search failed')
+      }
+
+      const data = await response.json()
+
+      return data.map((item) => ({
+        name: item.display_name,
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon),
+        type: item.type,
+        details: item,
+      }))
+    } catch (error) {
+      console.error('Error searching location:', error)
+      return []
+    }
+  }
+
+  // Combine locations with real-time data
+  const combineWithRealtimeData = (realtimeLocations) => {
+    // Base: gunakan semua lokasi dari store
+    const result = [...locations.value]
+
+    // Update dengan data real-time jika ada
+    if (realtimeLocations && realtimeLocations.length > 0) {
+      realtimeLocations.forEach(realtimeLoc => {
+        // Cari index lokasi yang sesuai di result
+        const existingIndex = result.findIndex(loc =>
+          loc.id === realtimeLoc.id ||
+          loc.name === realtimeLoc.name ||
+          (Math.abs(Number(loc.latitude) - Number(realtimeLoc.latitude)) < 0.0001 &&
+           Math.abs(Number(loc.longitude) - Number(realtimeLoc.longitude)) < 0.0001)
+        )
+
+        if (existingIndex !== -1) {
+          // Update lokasi yang sudah ada dengan data real-time
+          result[existingIndex] = {
+            ...result[existingIndex],
+            ...realtimeLoc,
+            // Pastikan field yang diperlukan ada
+            currentStatus: realtimeLoc.currentStatus || realtimeLoc.status || result[existingIndex].currentStatus,
+            currentWaterLevel: realtimeLoc.currentWaterLevel || realtimeLoc.waterLevel || result[existingIndex].currentWaterLevel,
+            currentRainfall: realtimeLoc.currentRainfall || realtimeLoc.rainfall || result[existingIndex].currentRainfall,
+            lastUpdate: realtimeLoc.lastUpdate || realtimeLoc.updatedAt || result[existingIndex].lastUpdate || result[existingIndex].updatedAt
+          }
+        } else {
+          // Tambah lokasi baru jika tidak ditemukan (lokasi baru dari real-time)
+          result.push({
+            ...realtimeLoc,
+            currentStatus: realtimeLoc.currentStatus || realtimeLoc.status,
+            currentWaterLevel: realtimeLoc.currentWaterLevel || realtimeLoc.waterLevel,
+            currentRainfall: realtimeLoc.currentRainfall || realtimeLoc.rainfall,
+            lastUpdate: realtimeLoc.lastUpdate || realtimeLoc.updatedAt
+          })
+        }
+      })
+    }
+
+    return result
+  }
+
+  // Calculate location statistics
+  const calculateLocationStats = (combinedLocations) => {
+    const stats = {
+      aman: 0,
+      waspada: 0,
+      siaga: 0,
+      bahaya: 0,
+      total: 0
+    }
+
+    if (!combinedLocations || !Array.isArray(combinedLocations)) {
+      return stats
+    }
+
+    combinedLocations.forEach(location => {
+      const status = (location.currentStatus || location.status || 'AMAN').toUpperCase()
+
+      switch (status) {
+        case 'AMAN':
+          stats.aman++
+          break
+        case 'WASPADA':
+          stats.waspada++
+          break
+        case 'SIAGA':
+          stats.siaga++
+          break
+        case 'BAHAYA':
+          stats.bahaya++
+          break
+        default:
+          stats.aman++ // Default ke aman jika status tidak dikenali
+          break
+      }
+      stats.total++
+    })
+
+    return stats
+  }
+
+  // Filter valid locations for mapping
+  const filterValidLocations = (combinedLocations, searchKeyword = '') => {
+    if (!combinedLocations || !Array.isArray(combinedLocations)) {
+      return []
+    }
+
+    return combinedLocations.filter(
+      (loc) =>
+        loc.latitude !== null &&
+        loc.longitude !== null &&
+        !isNaN(Number(loc.latitude)) &&
+        !isNaN(Number(loc.longitude)) &&
+        (loc.name?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+          loc.address?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+          loc.city?.toLowerCase().includes(searchKeyword.toLowerCase()))
+    )
+  }
+
+  // ===== COMPUTED GETTERS =====
+
+  // Getter untuk valid locations (locations yang bisa di-map)
+  const validLocations = computed(() => {
+    return filterValidLocations(locations.value)
+  })
+
+  // Getter untuk location stats dari data store saja
+  const locationStats = computed(() => {
+    return calculateLocationStats(locations.value)
+  })
+
+  // ===== EXISTING FUNCTIONS =====
+
   // Ambil semua lokasi
   const fetchAllLocations = async () => {
     try {
+      isLoading.value = true
+      error.value = null
       const res = await axios.get('/api/v1/locations')
       locations.value = res.data.data
-    } catch (error) {
-      console.error('❌ Gagal ambil lokasi:', error)
+    } catch (err) {
+      console.error('❌ Gagal ambil lokasi:', err)
+      error.value = err.message
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -148,10 +362,6 @@ export const useLocationStore = defineStore('locations', () => {
         hasReachedEnd.value = !pagination?.hasNextPage
         totalHistory.value = pagination?.total || newData.length
 
-        console.log(
-          `✅ Fetched ${newData.length} history items. Total: ${locationStatusHistory.value.length}`,
-        )
-
         return {
           success: true,
           data: newData,
@@ -193,8 +403,6 @@ export const useLocationStore = defineStore('locations', () => {
     // Add to beginning of array (newest first)
     locationStatusHistory.value.unshift(newItem)
     totalHistory.value += 1
-
-    console.log('📡 New history item added:', newItem)
   }
 
   // Clear history data
@@ -228,6 +436,20 @@ export const useLocationStore = defineStore('locations', () => {
     pageSize,
     hasReachedEnd,
     totalHistory,
+
+    // Computed getters
+    validLocations,
+    locationStats,
+
+    // Helper functions (NEW)
+    normalizeStatus,
+    getStatusColor,
+    getStatusText,
+    formatDate,
+    searchLocation,
+    combineWithRealtimeData,
+    calculateLocationStats,
+    filterValidLocations,
 
     // Actions
     getTotalLocations,
