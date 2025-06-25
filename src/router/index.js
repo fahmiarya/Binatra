@@ -5,18 +5,18 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'home',
+      component: () => import('@/views/HomeView.vue'),
+    },
+    {
+      path: '/sign-in',
       name: 'signin',
       component: () => import('@/views/SignIn.vue'),
     },
     {
-      path: '/signup',
+      path: '/sign-up',
       name: 'signup',
       component: () => import('@/views/SignUp.vue'),
-    },
-    {
-      path: '/home',
-      name: 'home',
-      component: () => import('@/views/HomeView.vue'),
     },
     {
       path: '/pemerintah-kota',
