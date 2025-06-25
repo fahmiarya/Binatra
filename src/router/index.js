@@ -1,46 +1,37 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import Admin from '@/layouts/Admin.vue'
-
-import Dashboard from '@/views/admin/Dashboard.vue'
-import Settings from '@/views/admin/Settings.vue'
-import Tables from '@/views/admin/Tables.vue'
-import Maps from '@/views/admin/Maps.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/admin/dashboard',
+      name: 'signin',
+      component: () => import('@/views/SignIn.vue'),
     },
     {
-      path: '/admin',
-      redirect: '/admin/dashboard',
-      component: Admin,
-      children: [
-        {
-          path: '/admin/dashboard',
-          component: Dashboard,
-        },
-        {
-          path: '/admin/settings',
-          component: Settings,
-        },
-        {
-          path: '/admin/tables',
-          component: Tables,
-        },
-        {
-          path: '/admin/maps',
-          component: Maps,
-        },
-      ],
+      path: '/signup',
+      name: 'signup',
+      component: () => import('@/views/SignUp.vue'),
     },
     {
-      path: '/',
+      path: '/home',
       name: 'home',
-      component: HomeView,
+      component: () => import('@/views/HomeView.vue'),
+    },
+    {
+      path: '/pemerintah-kota',
+      name: 'pemerintah kota',
+      component: () => import('@/views/PemerintahKota.vue'),
+    },
+    {
+      path: '/dinas-pekerjaan-umum',
+      name: 'dinas pu',
+      component: () => import('@/views/DinasPekerjaanUmum.vue'),
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/404.vue'),
     },
   ],
 })

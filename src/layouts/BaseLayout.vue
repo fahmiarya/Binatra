@@ -1,21 +1,50 @@
 <template>
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-gray-800 text-white p-4">
-      <slot name="sidebar" />
-    </aside>
+  <!-- <LoadingIndicator v-if="isLoading" /> -->
 
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
-      <!-- Header -->
-      <header class="bg-white shadow p-4">
-        <slot name="header" />
-      </header>
+  <div class="flex flex-col min-h-screen">
+    <!-- Header (Full Width) -->
+    <BaseHeader />
 
-      <!-- Page Content -->
-      <main class="flex-1 p-6 bg-gray-100">
-        <slot />
-      </main>
+    <div class="flex flex-1">
+      <!-- Sidebar -->
+      <BaseSidebar />
+
+      <!-- Main Content with Panel -->
+      <div class="flex-1 relative flex bg-[#E7ECEF] pt-6">
+        <!-- Main Content Area -->
+        <div class="flex-1 px-6 pb-1 w-full flex gap-10">
+          <slot />
+        </div>
+
+        <!-- Flood Monitoring Panel (Optional) -->
+        <FloodMonitoringPanel
+          :floodNotifications="floodNotifications"
+          :alertLocations="alertLocations"
+          @location-updated="handleLocationUpdate"
+          @notification-added="handleNotificationAdd"
+          class="pr-3"
+        />
+      </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import BaseHeader from '@/components/shared/BaseHeader.vue';
+import BaseSidebar from '@/components/shared/BaseSidebar.vue';
+import FloodMonitoringPanel from '@/components/shared/FloodMonitoringPanel.vue';
+import { ref, onMounted } from 'vue';
+
+// Emits
+const emit = defineEmits(['flood-data-updated']);
+
+// Simulating loading process
+const isLoading = ref(true);
+
+
+// Methods
+const handleLocationUpdate = (locationData) => {
+  emit('flood-data-updated', { type: 'location', data: locationData });
+};
+</script>
