@@ -76,7 +76,7 @@
 import BaseCard from '@/components/BaseCard.vue';
 import BaseLayout from '@/layouts/BaseLayout.vue';
 import CloudIcon from '@/assets/images/cloud.png';
-import { reactive, onMounted, onUnmounted, ref, computed, watch } from "vue";
+import { reactive, onMounted, ref, computed, watch } from "vue";
 import { listenToSensorData } from "@/socket.js";
 import { useWeatherStore } from '@/stores/weather.store';
 import { storeToRefs } from 'pinia';
@@ -215,10 +215,7 @@ const loadInitialData = async () => {
       locationStore.getTotalFloodLocations()
     ]);
 
-    // Only update if composable doesn't have data yet
-    if (!updateLocationsTotal.value) {
-      locationsTotal.value = totalLocations;
-    }
+    locationsTotal.value = totalLocations;
 
     if (!updateTotalFloodLocations.value) {
       totalFloodLocations.value = floodLocationCount;
