@@ -26,7 +26,7 @@ const router = createRouter({
       path: '/pemerintah-kota',
       name: 'pemerintah-kota',
       component: () => import('@/views/PemerintahKota.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true},
     },
     {
       path: '/dinas-pekerjaan-umum',

@@ -25,7 +25,6 @@ const {
   formatDate,
   searchLocation: storeSearchLocation,
   combineWithRealtimeData,
-  calculateLocationStats,
   filterValidLocations
 } = locationsStore
 
@@ -47,6 +46,29 @@ const deleteLocation = async (id) => {
     }
   }
 }
+
+// Computed untuk stats dari floodSummary
+const locationStats = computed(() => {
+  return floodSocket.floodSummary.value || {
+    aman: 0,
+    waspada: 0,
+    siaga: 0,
+    bahaya: 0,
+    total: 0
+  }
+})
+
+// Watch untuk floodSummary changes (seperti di home view)
+watch(() => floodSocket.floodSummary.value, (newSummary) => {
+  if (newSummary) {
+    console.log('🔄 FloodSummary updated:', newSummary)
+    // Trigger visual update jika perlu
+    isMapDataUpdating.value = true
+    setTimeout(() => {
+      isMapDataUpdating.value = false
+    }, 2000)
+  }
+}, { deep: true, immediate: true })
 
 delete L.Icon.Default.prototype._getIconUrl
 
@@ -204,9 +226,6 @@ const combinedLocations = computed(() => {
   return combineWithRealtimeData(floodSocket.floodLocations.value)
 })
 
-const locationStats = computed(() => {
-  return calculateLocationStats(combinedLocations.value)
-})
 
 const center = [-7.2575, 112.7521] // Koordinat Surabaya
 const newMarker = ref(null)

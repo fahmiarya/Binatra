@@ -20,8 +20,6 @@ export const useLocationStore = defineStore('locations', () => {
 
   axios.defaults.baseURL = import.meta.env.VITE_API_URL
 
-  // ===== FUNCTIONS YANG DIPINDAHKAN DARI COMPONENT =====
-
   // Status normalization and helpers
   const normalizeStatus = (apiStatus) => {
     if (!apiStatus) return 'normal'
@@ -116,7 +114,6 @@ export const useLocationStore = defineStore('locations', () => {
 
   // Combine locations with real-time data
   const combineWithRealtimeData = (realtimeLocations) => {
-    // Base: gunakan semua lokasi dari store
     const result = [...locations.value]
 
     // Update dengan data real-time jika ada
@@ -142,10 +139,9 @@ export const useLocationStore = defineStore('locations', () => {
             lastUpdate: realtimeLoc.lastUpdate || realtimeLoc.updatedAt || result[existingIndex].lastUpdate || result[existingIndex].updatedAt
           }
         } else {
-          // Tambah lokasi baru jika tidak ditemukan (lokasi baru dari real-time)
           result.push({
             ...realtimeLoc,
-            currentStatus: realtimeLoc.currentStatus || realtimeLoc.status,
+            currentStatus: realtimeLoc.currentStatus || realtimeLoc.status || result[existingIndex].currentStatus || result[existingIndex].status,
             currentWaterLevel: realtimeLoc.currentWaterLevel || realtimeLoc.waterLevel,
             currentRainfall: realtimeLoc.currentRainfall || realtimeLoc.rainfall,
             lastUpdate: realtimeLoc.lastUpdate || realtimeLoc.updatedAt
@@ -153,6 +149,8 @@ export const useLocationStore = defineStore('locations', () => {
         }
       })
     }
+
+    console.log("result : ", result)
 
     return result
   }
@@ -173,6 +171,9 @@ export const useLocationStore = defineStore('locations', () => {
 
     combinedLocations.forEach(location => {
       const status = (location.currentStatus || location.status || 'AMAN').toUpperCase()
+
+
+      console.log("status list : ", status)
 
       switch (status) {
         case 'AMAN':

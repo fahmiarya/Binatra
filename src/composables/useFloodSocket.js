@@ -90,6 +90,7 @@ export function useFloodSocket() {
         floodSummary.value = data.summary;
         socket.lastUpdateTime.value = formatLastUpdate(data.timestamp);
       }
+
     });
 
     // Initial flood status response

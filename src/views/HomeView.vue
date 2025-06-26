@@ -143,16 +143,6 @@ const updateTotalFloodLocations = computed(() => {
   return floodSocket.floodLocations.value?.length || 0;
 });
 
-// Update locationsTotal (warning locations) from flood composable
-const updateLocationsTotal = computed(() => {
-  console.log("total titik lokasi update : ", floodSocket.floodLocations.value)
-  if (!floodSocket.floodLocations.value) return 0;
-
-  return floodSocket.floodLocations.value.filter(location =>
-    ['WASPADA', 'SIAGA', 'BAHAYA'].includes(location.currentStatus)
-  ).length;
-});
-
 // Watch for changes and update reactive state
 watch(updateTotalFloodLocations, (newValue) => {
   totalFloodLocations.value = newValue;
