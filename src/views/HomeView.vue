@@ -28,7 +28,7 @@
         </BaseCard>
 
         <!-- Jumlah Lokasi Banjir -->
-        <BaseCard title="Jumlah Lokasi Banjir" customClass="scrollbar-hidden" :showTopRightArrow="true">
+        <BaseCard title="Jumlah Lokasi Status Banjir" customClass="scrollbar-hidden" :showTopRightArrow="true">
           <div class="flex items-center min-h-[120px]">
             <div class="flex flex-col">
               <span class="text-4xl font-medium text-[#516F91]">{{ totalFloodLocations }}</span>

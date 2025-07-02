@@ -4,11 +4,11 @@
     customClass
   ]">
     <!-- Card Header -->
-    <div v-if="title || hasArrow" class="flex justify-between items-center p-6 pb-2">
+    <div v-if="title" class="flex justify-between items-center p-6 pb-2">
       <h3 v-if="title" class="text-xl font-semibold text-[#274C77]">{{ title }}</h3>
-      <button v-if="hasArrow" class="text-gray-400 hover:text-gray-600 transition-colors">
+      <!-- <button v-if="hasArrow" class="text-gray-400 hover:text-gray-600 transition-colors">
         <i class="fas fa-chevron-right"></i>
-      </button>
+      </button> -->
     </div>
 
     <!-- Card Content -->
@@ -30,10 +30,10 @@ defineProps({
     type: String,
     default: ''
   },
-  hasArrow: {
-    type: Boolean,
-    default: true
-  },
+  // hasArrow: {
+  //   type: Boolean,
+  //   default: true
+  // },
   showTopRightArrow: {
     type: Boolean,
     default: false

@@ -179,6 +179,8 @@ const getIconByStatus = (status, isRecentlyUpdated = false) => {
 
   if (isRecentlyUpdated) {
     switch (normalizedStatus) {
+      case 'normal':
+        return normalIcon
       case 'warning':
         return pulsingWarningIcon
       case 'danger':
@@ -218,7 +220,7 @@ const markLocationAsRecentlyUpdated = (locationId) => {
 // Check if location was recently updated
 const isLocationRecentlyUpdated = (locationId) => {
   return recentlyUpdatedLocationIds.value.has(locationId) ||
-         floodSocket.recentlyUpdatedLocations.value.includes(locationId)
+    floodSocket.recentlyUpdatedLocations.value.includes(locationId)
 }
 
 // COMPUTED MENGGUNAKAN FUNCTIONS DARI STORE
@@ -295,6 +297,19 @@ const form = ref({
   siagaMin: 150,
   siagaMax: 199,
   bahayaMin: 200,
+})
+
+// Auto-calculate min thresholds based on max values
+watch(() => form.value.amanMax, (newValue) => {
+  form.value.waspadaMin = Number(newValue) + 1
+})
+
+watch(() => form.value.waspadaMax, (newValue) => {
+  form.value.siagaMin = Number(newValue) + 1
+})
+
+watch(() => form.value.siagaMax, (newValue) => {
+  form.value.bahayaMin = Number(newValue) + 1
 })
 
 const searchQuery = ref('')
@@ -439,8 +454,8 @@ watch(() => floodSocket.floodLocations.value, (newLocations, oldLocations) => {
       newLocations.forEach(newLoc => {
         const oldLoc = oldLocations.find(old => old.id === newLoc.id)
         if (!oldLoc ||
-            oldLoc.currentStatus !== newLoc.currentStatus ||
-            oldLoc.currentWaterLevel !== newLoc.currentWaterLevel) {
+          oldLoc.currentStatus !== newLoc.currentStatus ||
+          oldLoc.currentWaterLevel !== newLoc.currentWaterLevel) {
           markLocationAsRecentlyUpdated(newLoc.id)
         }
       })
@@ -547,23 +562,14 @@ onMounted(async () => {
           </div>
 
           <div class="relative w-full mt-4">
-            <input
-              v-model="searchQuery"
-              placeholder="Cari lokasi, contoh: Surabaya, Bandung..."
-              class="border px-3 py-1 w-full"
-            />
+            <input v-model="searchQuery" placeholder="Cari lokasi, contoh: Surabaya, Bandung..."
+              class="border px-3 py-1 w-full" />
 
             <!-- Suggestion list menggunakan search dari store -->
-            <div
-              v-if="searchResults.length"
-              class="absolute top-full left-0 right-0 border bg-white max-h-48 overflow-auto z-50 shadow"
-            >
-              <div
-                v-for="result in searchResults"
-                :key="result.lat + result.lon"
-                @click="pickSearchedLocation(result)"
-                class="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-              >
+            <div v-if="searchResults.length"
+              class="absolute top-full left-0 right-0 border bg-white max-h-48 overflow-auto z-50 shadow">
+              <div v-for="result in searchResults" :key="result.lat + result.lon" @click="pickSearchedLocation(result)"
+                class="p-2 hover:bg-gray-100 cursor-pointer text-sm">
                 {{ result.name }}
               </div>
             </div>
@@ -586,34 +592,21 @@ onMounted(async () => {
         </BaseCard>
       </div>
       <div class="w-full h-screen relative z-0">
-        <LMap
-          ref="mapRef"
-          :zoom="11"
-          :center="center"
-          class="h-full w-full"
-          @ready="onMapReady"
-          @click="handleMapClick"
-        >
-          <LTileLayer
-            url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
-            attribution="© OpenTopoMap contributors"
-            :max-zoom="16"
-            :min-zoom="3"
-          />
+        <LMap ref="mapRef" :zoom="11" :center="center" class="h-full w-full" @ready="onMapReady"
+          @click="handleMapClick">
+          <LTileLayer url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" attribution="© OpenTopoMap contributors"
+            :max-zoom="16" :min-zoom="3" />
 
           <!-- Marker lokasi dengan validLocations dari store -->
-          <LMarker
-            v-for="loc in validLocations"
-            :key="`marker-${loc.id}-${loc.lastUpdate || loc.updatedAt}`"
+          <LMarker v-for="loc in validLocations" :key="`marker-${loc.id}-${loc.lastUpdate || loc.updatedAt}`"
             :lat-lng="[Number(loc.latitude), Number(loc.longitude)]"
-            :icon="getIconByStatus(loc.currentStatus || loc.status, isLocationRecentlyUpdated(loc.id))"
-          >
+            :icon="getIconByStatus(loc.currentStatus || loc.status, isLocationRecentlyUpdated(loc.id))">
             <LPopup>
               <div class="text-sm space-y-1 min-w-48">
                 <div class="flex justify-between items-start mb-2">
                   <h3 class="font-bold text-base mb-1">{{ loc.name }}</h3>
                   <div v-if="isLocationRecentlyUpdated(loc.id)"
-                       class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full animate-pulse">
+                    class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full animate-pulse">
                     Baru Update
                   </div>
                 </div>
@@ -648,16 +641,12 @@ onMounted(async () => {
                 </div>
 
                 <div class="flex gap-2 mt-2">
-                  <button
-                    @click="editLocation(loc)"
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                  >
+                  <button @click="editLocation(loc)"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
                     Edit
                   </button>
-                  <button
-                    @click="deleteLocation(loc.id)"
-                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-                  >
+                  <button @click="deleteLocation(loc.id)"
+                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
                     Hapus
                   </button>
                 </div>
@@ -682,74 +671,41 @@ onMounted(async () => {
         <div class="grid grid-cols-3 gap-2 mb-4">
           <div>
             <label class="block text-xs mb-1">Batas Aman Maks</label>
-            <input
-              v-model.number="form.amanMax"
-              placeholder="Aman Max"
-              type="number"
-              class="border p-2 w-full"
-            />
+            <input v-model.number="form.amanMax" placeholder="Aman Max" type="number" class="border p-2 w-full" />
           </div>
           <div>
             <label class="block text-xs mb-1">Batas Waspada Min</label>
-            <input
-              v-model.number="form.waspadaMin"
-              placeholder="Waspada Min"
-              type="number"
-              class="border p-2 w-full"
-            />
+            <input disabled v-model.number="form.waspadaMin" placeholder="Waspada Min" type="number"
+              class="border p-2 w-full" />
           </div>
           <div>
             <label class="block text-xs mb-1">Batas Waspada Maks</label>
-            <input
-              v-model.number="form.waspadaMax"
-              placeholder="Waspada Max"
-              type="number"
-              class="border p-2 w-full"
-            />
+            <input v-model.number="form.waspadaMax" placeholder="Waspada Max" type="number" class="border p-2 w-full" />
           </div>
           <div>
             <label class="block text-xs mb-1">Batas Siaga Min</label>
-            <input
-              v-model.number="form.siagaMin"
-              placeholder="Siaga Min"
-              type="number"
-              class="border p-2 w-full"
-            />
+            <input disabled v-model.number="form.siagaMin" placeholder="Siaga Min" type="number"
+              class="border p-2 w-full" />
           </div>
           <div>
             <label class="block text-xs mb-1">Batas Siaga Maks</label>
-            <input
-              v-model.number="form.siagaMax"
-              placeholder="Siaga Max"
-              type="number"
-              class="border p-2 w-full"
-            />
+            <input v-model.number="form.siagaMax" placeholder="Siaga Max" type="number" class="border p-2 w-full" />
           </div>
           <div>
             <label class="block text-xs mb-1">Batas Bahaya Min</label>
-            <input
-              v-model.number="form.bahayaMin"
-              placeholder="Bahaya Min"
-              type="number"
-              class="border p-2 w-full"
-            />
+            <input disabled v-model.number="form.bahayaMin" placeholder="Bahaya Min" type="number"
+              class="border p-2 w-full" />
           </div>
         </div>
 
         <p class="text-sm mb-4">Latitude: {{ form.latitude }}, Longitude: {{ form.longitude }}</p>
         <div class="flex justify-between items-center mt-4">
-          <button
-            @click="batalForm"
-            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-          >
+          <button @click="batalForm" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
             Batal
           </button>
 
-          <button
-            @click="submitForm"
-            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            :disabled="loading"
-          >
+          <button @click="submitForm" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            :disabled="loading">
             {{ loading ? 'Menyimpan...' : 'Simpan Lokasi' }}
           </button>
         </div>
@@ -767,10 +723,12 @@ onMounted(async () => {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
   line-height: 1.6;
 }
+
 .info.legend h4 {
   margin: 0 0 5px 0;
   font-size: 13px;
 }
+
 .info.legend p {
   margin: 4px 0;
 }
@@ -798,10 +756,12 @@ onMounted(async () => {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 0.7;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -809,9 +769,12 @@ onMounted(async () => {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
