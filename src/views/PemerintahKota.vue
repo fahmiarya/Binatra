@@ -1,6 +1,6 @@
 <script setup>
-import BaseLayout from '@/layouts/BaseLayout.vue'
-import BaseCard from '@/components/BaseCard.vue'
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'
+import BaseCard from '@/components/ui/BaseCard.vue'
 import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -526,7 +526,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <BaseLayout>
+  <AuthenticatedLayout>
     <div class="w-full flex flex-col items-center">
       <div class="w-full mb-4 relative z-20">
         <BaseCard title="Peta Real-time Titik Lokasi Banjir" customClass="w-full">
@@ -711,7 +711,7 @@ onMounted(async () => {
         </div>
       </BaseCard>
     </div>
-  </BaseLayout>
+  </AuthenticatedLayout>
 </template>
 
 <style>

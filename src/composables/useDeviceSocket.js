@@ -106,6 +106,17 @@ export function useDeviceSocket() {
       addDeviceNotification(notification);
     });
 
+    // NEW: Device setting response handlers
+    const deviceSettingSuccessCleanup = socket.on('device-setting-success', (data) => {
+      console.log('✅ Device setting updated successfully:', data);
+      // You can add additional logic here like showing success notification
+    });
+
+    const deviceSettingErrorCleanup = socket.on('device-setting-error', (error) => {
+      console.error('❌ Device setting update failed:', error);
+      // You can add additional logic here like showing error notification
+    });
+
     // Store cleanup functions
     cleanupFunctions.push(
       sensorDataCleanup,
@@ -118,7 +129,9 @@ export function useDeviceSocket() {
       deviceCheckCleanup,
       deviceCheckErrorCleanup,
       deviceNotificationCleanup,
-      specificDeviceNotificationCleanup
+      specificDeviceNotificationCleanup,
+      deviceSettingSuccessCleanup,
+      deviceSettingErrorCleanup
     );
   };
 
@@ -203,6 +216,62 @@ export function useDeviceSocket() {
     // Keep only last 10 updates
     if (recentSensorUpdates.value.length > 10) {
       recentSensorUpdates.value = recentSensorUpdates.value.slice(0, 10);
+    }
+  };
+
+  // NEW: Send device setting to backend
+  const updateDeviceSetting = async (deviceCode, locationId, calibration, periode) => {
+    try {
+      if (!socket.isConnected()) {
+        console.error('❌ Socket not connected');
+        throw new Error('Socket connection not available');
+      }
+
+      const settingData = {
+        deviceCode,
+        locationId,
+        calibration,
+        periode
+      };
+
+      console.log('📤 Sending device setting:', settingData);
+
+      return new Promise((resolve, reject) => {
+        // Set up temporary listeners for this specific request
+        const successHandler = (data) => {
+          if (data.deviceCode === deviceCode) {
+            socket.off('device-setting-success', successHandler);
+            socket.off('device-setting-error', errorHandler);
+            resolve(data);
+          }
+        };
+
+        const errorHandler = (error) => {
+          if (error.deviceCode === deviceCode) {
+            socket.off('device-setting-success', successHandler);
+            socket.off('device-setting-error', errorHandler);
+            reject(error);
+          }
+        };
+
+        // Add temporary listeners
+        socket.on('device-setting-success', successHandler);
+        socket.on('device-setting-error', errorHandler);
+
+        // Send the setting data
+        socket.emit('device-setting', settingData);
+
+        // Set timeout for the request
+        setTimeout(() => {
+          socket.off('device-setting-success', successHandler);
+          socket.off('device-setting-error', errorHandler);
+          reject(new Error('Device setting update timeout'));
+        }, 10000); // 10 second timeout
+      });
+
+    } catch (error) {
+      console.error('❌ Error updating device setting:', error);
+      throw error;
     }
   };
 
@@ -333,6 +402,9 @@ export function useDeviceSocket() {
     getAllDeviceStatuses,
     isDeviceOnline,
     clearRecentUpdates,
+
+    // NEW: Device setting method
+    updateDeviceSetting,
 
     markDeviceNotificationAsRead,
     getUnreadDeviceNotifications,

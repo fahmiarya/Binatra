@@ -22,14 +22,31 @@ export const useDeviceStore = defineStore('device', () => {
     }
   }
 
+  const getAllDevices = async (limit = 1, page = 1) => {
+    try {
+      const response = await axios.get('/api/v1/devices', {
+        limit,
+        page
+      });
+      devices.value = response.data.data.devices
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getDevice = async (id) => {
+    try {
+      const {data} = await axios.get(`/api/v1/devices/detail/${id}`);
+      return data.data.devices
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const fetchDevices = async () => {
     try {
       const response = await axios.get('/api/v1/devices');
       devices.value = response.data.data.devices
-
-      console.log(devices.value)
-      console.log(response.data.data.devices)
-
     } catch (error) {
       console.error('Error fetching devices:', error);
     }
@@ -90,6 +107,24 @@ export const useDeviceStore = defineStore('device', () => {
     }
   }
 
+  const updateDevice = async (payload, id) => {
+    try {
+      if(!id) return {
+        type : 'error',
+        message : 'update device error'
+      }
+
+      await axios.put(`/api/v1/devices/${id}`, payload)
+
+      return {
+        type : 'success',
+        message : 'update device succesfully'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   // Method untuk update real-time data dari komponen
   const addRealTimeData = (newData) => {
     const newLogEntry = {
@@ -111,15 +146,27 @@ export const useDeviceStore = defineStore('device', () => {
     sensorLogs.value = updatedLogs;
   }
 
+  const deleteDevice = async (id) => {
+    try {
+      await axios.delete(`/api/v1/devices/${id}`);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   return {
     devices,
     isLoading,
     error,
-    sensorLogs, // Export reactive ref
+    sensorLogs,
     getConnectedDevices,
+    getAllDevices,
+    getDevice,
     getChartData,
     fetchDevices,
     fetchSensorLogHistory,
-    addRealTimeData // Export method untuk real-time update
+    updateDevice,
+    addRealTimeData,
+    deleteDevice,
   }
 })

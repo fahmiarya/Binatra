@@ -1,5 +1,5 @@
 <template>
-  <BaseLayout>
+  <AuthenticatedLayout>
     <!-- Bagian kiri (2/3 layar) -->
     <div class="w-full flex flex-col gap-10">
       <!-- Baris pertama -->
@@ -69,18 +69,18 @@
         </BaseCard>
       </div>
     </div>
-  </BaseLayout>
+  </AuthenticatedLayout>
 </template>
 
 <script setup>
-import BaseCard from '@/components/BaseCard.vue';
-import BaseLayout from '@/layouts/BaseLayout.vue';
+import BaseCard from '@/components/ui/BaseCard.vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import CloudIcon from '@/assets/images/cloud.png';
 import { reactive, onMounted, ref, computed, watch } from "vue";
-import { listenToSensorData } from "@/socket.js";
+import { listenToSensorData } from "@/plugins/socket.js";
 import { useWeatherStore } from '@/stores/weather.store';
 import { storeToRefs } from 'pinia';
-import BaseAreaChart from '@/components/BaseAreaChart.vue';
+import BaseAreaChart from '@/components/ui/BaseAreaChart.vue';
 import { useDeviceStore } from '@/stores/deviceStore';
 import { useLocationStore } from '@/stores/locationStore';
 

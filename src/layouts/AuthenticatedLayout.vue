@@ -18,6 +18,7 @@
 
         <!-- Flood Monitoring Panel (Optional) -->
         <FloodMonitoringPanel
+          v-if="shouldShowFloodPanel"
           :floodNotifications="floodNotifications"
           :alertLocations="alertLocations"
           @location-updated="handleLocationUpdate"
@@ -30,18 +31,23 @@
 </template>
 
 <script setup>
-import LoadingIndicator from '@/components/LoadingIndicator.vue';
+// import LoadingIndicator from '@/components/ui/LoadingIndicator.vue';
 import BaseHeader from '@/components/shared/BaseHeader.vue';
 import BaseSidebar from '@/components/shared/BaseSidebar.vue';
 import FloodMonitoringPanel from '@/components/shared/FloodMonitoringPanel.vue';
-import { ref, onMounted } from 'vue';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router'
 
 // Emits
 const emit = defineEmits(['flood-data-updated']);
 
 // Simulating loading process
-const isLoading = ref(true);
+// const isLoading = ref(true);
 
+const route = useRoute()
+
+const hideFloodPanelPages = ['Device List', 'User List', 'Device Detail']
+const shouldShowFloodPanel = computed(() => !hideFloodPanelPages.includes(route.name))
 
 // Methods
 const handleLocationUpdate = (locationData) => {

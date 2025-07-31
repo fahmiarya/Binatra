@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import BaseLayout from '@/layouts/BaseLayout.vue';
-import BaseAreaChart from '@/components/BaseAreaChart.vue';
-import BaseCard from '@/components/BaseCard.vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import BaseAreaChart from '@/components/ui/BaseAreaChart.vue';
+import BaseCard from '@/components/ui/BaseCard.vue';
 </script>
 
 <template>
-  <BaseLayout>
+  <AuthenticatedLayout>
     <BaseCard title="Real Time Ketinggian Banjir" customClass="w-full">
       <BaseAreaChart />
     </BaseCard>
-  </BaseLayout>
+  </AuthenticatedLayout>
 </template>

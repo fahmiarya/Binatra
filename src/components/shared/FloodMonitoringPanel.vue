@@ -141,7 +141,7 @@
 </template>
 
 <script setup>
-import BaseCard from '@/components/BaseCard.vue';
+import BaseCard from '@/components/ui/BaseCard.vue';
 import { useFloodSocket } from '@/composables/useFloodSocket.js';
 import { useLocationStore } from '@/stores/locationStore.js';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';

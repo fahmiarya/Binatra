@@ -71,6 +71,18 @@ const locations = [
     name: 'Dinas PU',
     route: '/dinas-pekerjaan-umum',
   },
+  {
+    name: 'Devices',
+    route: '/devices',
+  },
+  // {
+  //   name: 'Users',
+  //   route: '/users',
+  // },
+  // {
+  //   name: 'MQTT Credentials',
+  //   route: '',
+  // },
   // {
   //   name: 'Dinas Perhubungan (Dishub)',
   //   route: '/dinas-perhubungan',
@@ -101,8 +113,6 @@ async function handleLocationClick(lat, lon, locationName) {
         lon,
       }),
     )
-
-    console.log(`Navigated to ${locationName}`)
   } catch (error) {
     console.error('Error fetching weather data:', error)
   }
