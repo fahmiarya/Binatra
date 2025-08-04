@@ -3,6 +3,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import axios from 'axios'
 
+const DEV = true
+
 export const useDeviceStore = defineStore('device', () => {
   // State
   const devices = ref([])
@@ -11,7 +13,7 @@ export const useDeviceStore = defineStore('device', () => {
   const sensorLogs = ref([])
   const currentReading = ref(null)
 
-  axios.defaults.baseURL = import.meta.env.VITE_API_URL;
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL
 
   const getConnectedDevices = async () => {
     try {
@@ -26,8 +28,8 @@ export const useDeviceStore = defineStore('device', () => {
     try {
       const response = await axios.get('/api/v1/devices', {
         limit,
-        page
-      });
+        page,
+      })
       devices.value = response.data.data.devices
     } catch (error) {
       console.log(error)
@@ -35,22 +37,48 @@ export const useDeviceStore = defineStore('device', () => {
   }
 
   const getDevice = async (id) => {
+    if (DEV) {
+      return {
+        id: '6b66b023-ba37-4200-a53e-80697e4a8a1c',
+        code: '00000000',
+        description: 'dedicated',
+        locationId: 2,
+        status: 'DISCONNECTED',
+        calibration: 70,
+        periode: 60,
+        lastSeen: '2025-07-31T11:05:08.278Z',
+        createdAt: '2025-07-31T09:05:32.343Z',
+        updatedAt: '2025-07-31T11:10:48.374Z',
+        location: {
+          id: 2,
+          name: 'Alat Dedicated',
+          address: 'Kali Jagir, Rungkut, Surabaya, Jawa Timur, Jawa, Indonesia',
+          latitude: -7.321, // tambahkan jika dibutuhkan untuk peta
+          longitude: 112.763, // tambahkan jika dibutuhkan untuk peta
+        },
+      }
+    }
+
+    const url = `/api/v1/devices/detail/${id}`
+    console.log(`[API] GET ${url}`)
+
     try {
-      const {data} = await axios.get(`/api/v1/devices/detail/${id}`);
+      const { data } = await axios.get(`/api/v1/devices/detail/${id}`)
+      console.log('[API Response]', data)
       return data.data.devices
     } catch (error) {
-      console.log(error)
+      console.error('[API Error]', error)
     }
   }
 
   const fetchDevices = async () => {
     try {
-      const response = await axios.get('/api/v1/devices');
+      const response = await axios.get('/api/v1/devices')
       devices.value = response.data.data.devices
     } catch (error) {
-      console.error('Error fetching devices:', error);
+      console.error('Error fetching devices:', error)
     }
-  };
+  }
 
   const fetchSensorLogHistory = async (deviceCode, startDate, endDate) => {
     isLoading.value = true
@@ -61,7 +89,9 @@ export const useDeviceStore = defineStore('device', () => {
       if (startDate) params.append('startDate', startDate)
       if (endDate) params.append('endDate', endDate)
 
-      const {data} = await axios.get(`/api/v1/sensorLogs/history/${deviceCode}?${params.toString()}`)
+      const { data } = await axios.get(
+        `/api/v1/sensorLogs/history/${deviceCode}?${params.toString()}`,
+      )
 
       if (data) {
         // Pastikan assign dengan ref.value untuk reactivity
@@ -73,7 +103,7 @@ export const useDeviceStore = defineStore('device', () => {
             deviceCode: deviceCode,
             waterLevel: data.data[0].waterLevel,
             rainfall: data.data[0].rainfall,
-            timestamp: data.data[0].timestamp // Gunakan timestamp asli dari database
+            timestamp: data.data[0].timestamp, // Gunakan timestamp asli dari database
           }
         }
       }
@@ -91,34 +121,35 @@ export const useDeviceStore = defineStore('device', () => {
     // Pastikan menggunakan .value untuk reactive
     const logs = sensorLogs.value || []
 
-    const waterData = logs.map(log => ({
+    const waterData = logs.map((log) => ({
       x: new Date(log.timestamp).getTime(), // Konversi ke milliseconds untuk ApexCharts
-      y: log.waterLevel || 0
+      y: log.waterLevel || 0,
     }))
 
-    const rainfallData = logs.map(log => ({
+    const rainfallData = logs.map((log) => ({
       x: new Date(log.timestamp).getTime(), // Konversi ke milliseconds untuk ApexCharts
-      y: log.rainfall || 0
+      y: log.rainfall || 0,
     }))
 
     return {
       waterData: waterData.reverse(), // Reverse untuk urutan kronologis di chart
-      rainfallData: rainfallData.reverse()
+      rainfallData: rainfallData.reverse(),
     }
   }
 
   const updateDevice = async (payload, id) => {
     try {
-      if(!id) return {
-        type : 'error',
-        message : 'update device error'
-      }
+      if (!id)
+        return {
+          type: 'error',
+          message: 'update device error',
+        }
 
       await axios.put(`/api/v1/devices/${id}`, payload)
 
       return {
-        type : 'success',
-        message : 'update device succesfully'
+        type: 'success',
+        message: 'update device succesfully',
       }
     } catch (error) {
       console.log(error)
@@ -131,24 +162,24 @@ export const useDeviceStore = defineStore('device', () => {
       id: `realtime-${Date.now()}`,
       waterLevel: newData.waterLevel,
       rainfall: newData.rainfall,
-      timestamp: newData.timestamp
-    };
+      timestamp: newData.timestamp,
+    }
 
     // Create new array untuk trigger reactivity
-    const currentLogs = sensorLogs.value || [];
-    const updatedLogs = [newLogEntry, ...currentLogs];
+    const currentLogs = sensorLogs.value || []
+    const updatedLogs = [newLogEntry, ...currentLogs]
 
     // Batasi data
     if (updatedLogs.length > 50) {
-      updatedLogs.splice(50);
+      updatedLogs.splice(50)
     }
 
-    sensorLogs.value = updatedLogs;
+    sensorLogs.value = updatedLogs
   }
 
   const deleteDevice = async (id) => {
     try {
-      await axios.delete(`/api/v1/devices/${id}`);
+      await axios.delete(`/api/v1/devices/${id}`)
     } catch (error) {
       console.log(error)
     }

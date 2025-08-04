@@ -3,6 +3,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
 
+const DEV = true
+
 export const useLocationStore = defineStore('locations', () => {
   // State
   const locations = ref([])
@@ -90,7 +92,7 @@ export const useLocationStore = defineStore('locations', () => {
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=id`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=id`,
       )
 
       if (!response.ok) {
@@ -118,13 +120,14 @@ export const useLocationStore = defineStore('locations', () => {
 
     // Update dengan data real-time jika ada
     if (realtimeLocations && realtimeLocations.length > 0) {
-      realtimeLocations.forEach(realtimeLoc => {
+      realtimeLocations.forEach((realtimeLoc) => {
         // Cari index lokasi yang sesuai di result
-        const existingIndex = result.findIndex(loc =>
-          loc.id === realtimeLoc.id ||
-          loc.name === realtimeLoc.name ||
-          (Math.abs(Number(loc.latitude) - Number(realtimeLoc.latitude)) < 0.0001 &&
-           Math.abs(Number(loc.longitude) - Number(realtimeLoc.longitude)) < 0.0001)
+        const existingIndex = result.findIndex(
+          (loc) =>
+            loc.id === realtimeLoc.id ||
+            loc.name === realtimeLoc.name ||
+            (Math.abs(Number(loc.latitude) - Number(realtimeLoc.latitude)) < 0.0001 &&
+              Math.abs(Number(loc.longitude) - Number(realtimeLoc.longitude)) < 0.0001),
         )
 
         if (existingIndex !== -1) {
@@ -133,24 +136,41 @@ export const useLocationStore = defineStore('locations', () => {
             ...result[existingIndex],
             ...realtimeLoc,
             // Pastikan field yang diperlukan ada
-            currentStatus: realtimeLoc.currentStatus || realtimeLoc.status || result[existingIndex].currentStatus,
-            currentWaterLevel: realtimeLoc.currentWaterLevel || realtimeLoc.waterLevel || result[existingIndex].currentWaterLevel,
-            currentRainfall: realtimeLoc.currentRainfall || realtimeLoc.rainfall || result[existingIndex].currentRainfall,
-            lastUpdate: realtimeLoc.lastUpdate || realtimeLoc.updatedAt || result[existingIndex].lastUpdate || result[existingIndex].updatedAt
+            currentStatus:
+              realtimeLoc.currentStatus ||
+              realtimeLoc.status ||
+              result[existingIndex].currentStatus,
+            currentWaterLevel:
+              realtimeLoc.currentWaterLevel ||
+              realtimeLoc.waterLevel ||
+              result[existingIndex].currentWaterLevel,
+            currentRainfall:
+              realtimeLoc.currentRainfall ||
+              realtimeLoc.rainfall ||
+              result[existingIndex].currentRainfall,
+            lastUpdate:
+              realtimeLoc.lastUpdate ||
+              realtimeLoc.updatedAt ||
+              result[existingIndex].lastUpdate ||
+              result[existingIndex].updatedAt,
           }
         } else {
           result.push({
             ...realtimeLoc,
-            currentStatus: realtimeLoc.currentStatus || realtimeLoc.status || result[existingIndex].currentStatus || result[existingIndex].status,
+            currentStatus:
+              realtimeLoc.currentStatus ||
+              realtimeLoc.status ||
+              result[existingIndex].currentStatus ||
+              result[existingIndex].status,
             currentWaterLevel: realtimeLoc.currentWaterLevel || realtimeLoc.waterLevel,
             currentRainfall: realtimeLoc.currentRainfall || realtimeLoc.rainfall,
-            lastUpdate: realtimeLoc.lastUpdate || realtimeLoc.updatedAt
+            lastUpdate: realtimeLoc.lastUpdate || realtimeLoc.updatedAt,
           })
         }
       })
     }
 
-    console.log("result : ", result)
+    console.log('result : ', result)
 
     return result
   }
@@ -162,18 +182,17 @@ export const useLocationStore = defineStore('locations', () => {
       waspada: 0,
       siaga: 0,
       bahaya: 0,
-      total: 0
+      total: 0,
     }
 
     if (!combinedLocations || !Array.isArray(combinedLocations)) {
       return stats
     }
 
-    combinedLocations.forEach(location => {
+    combinedLocations.forEach((location) => {
       const status = (location.currentStatus || location.status || 'AMAN').toUpperCase()
 
-
-      console.log("status list : ", status)
+      console.log('status list : ', status)
 
       switch (status) {
         case 'AMAN':
@@ -212,7 +231,7 @@ export const useLocationStore = defineStore('locations', () => {
         !isNaN(Number(loc.longitude)) &&
         (loc.name?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
           loc.address?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-          loc.city?.toLowerCase().includes(searchKeyword.toLowerCase()))
+          loc.city?.toLowerCase().includes(searchKeyword.toLowerCase())),
     )
   }
 
@@ -232,6 +251,46 @@ export const useLocationStore = defineStore('locations', () => {
 
   // Ambil semua lokasi
   const fetchAllLocations = async () => {
+    if (DEV) {
+      locations.value = [
+        {
+          id: 1,
+          name: 'Test Location 1',
+          address: 'Jl. Test 1',
+          district: 'sukodono',
+          city: 'sidoarjo',
+          province: 'jawa timur',
+          latitude: -7.2575,
+          longitude: 112.7521,
+          status: 'AMAN',
+          amanMax: 79,
+          waspadaMin: 80,
+          waspadaMax: 149,
+          siagaMin: 150,
+          siagaMax: 199,
+          bahayaMin: 200,
+        },
+        {
+          id: 2,
+          name: 'Test Location 2',
+          address: 'Jl. Test 2',
+          district: 'waru',
+          city: 'sidoarjo',
+          province: 'jawa timur',
+          latitude: -7.2675,
+          longitude: 112.7621,
+          status: 'WASPADA',
+          amanMax: 79,
+          waspadaMin: 80,
+          waspadaMax: 149,
+          siagaMin: 150,
+          siagaMax: 199,
+          bahayaMin: 200,
+        },
+      ]
+      return
+    }
+
     try {
       isLoading.value = true
       error.value = null
