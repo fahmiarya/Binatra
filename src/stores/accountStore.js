@@ -2,8 +2,10 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 
 // Setup axios defaults
-axios.defaults.baseURL = import.meta.env.VITE_API_URL;
+axios.defaults.baseURL = import.meta.env.VITE_API_URL
 axios.defaults.withCredentials = true
+
+const DEV = false
 
 export const useAccountStore = defineStore('account', {
   state: () => ({
@@ -100,6 +102,6 @@ export const useAccountStore = defineStore('account', {
       this.isAuthenticated = false
       this.initialized = true
       this.loading = false
-    }
+    },
   },
 })

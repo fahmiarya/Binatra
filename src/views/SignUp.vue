@@ -52,7 +52,10 @@ const register = async () => {
       showErrToast(response.message || 'Pendaftaran gagal.')
     }
   } catch (error) {
-    const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Pendaftaran gagal. Silakan coba lagi.'
+    const errorMessage =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      'Pendaftaran gagal. Silakan coba lagi.'
     showErrToast(errorMessage)
   }
 }
@@ -72,7 +75,6 @@ onMounted(async () => {
   }
 })
 </script>
-
 
 <template>
   <section class="flex flex-col min-h-screen">
@@ -166,7 +168,9 @@ onMounted(async () => {
                   </div>
                   <p class="mt-4 mb-0 leading-normal text-sm">
                     Sudah Punya Akun?
-                    <router-link to="/sign-in" class="font-bold text-slate-700">Sign in</router-link>
+                    <router-link to="/sign-in" class="font-bold text-slate-700"
+                      >Sign in</router-link
+                    >
                   </p>
                 </form>
               </div>
