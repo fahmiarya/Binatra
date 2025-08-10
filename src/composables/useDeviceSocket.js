@@ -219,8 +219,7 @@ export function useDeviceSocket() {
     }
   };
 
-  // NEW: Send device setting to backend
-  const updateDeviceSetting = async (deviceCode, locationId, calibration, periode) => {
+  const updateDeviceSetting = async (deviceCode, deviceName, description, locationId, calibration, periode) => {
     try {
       if (!socket.isConnected()) {
         console.error('❌ Socket not connected');
@@ -229,12 +228,13 @@ export function useDeviceSocket() {
 
       const settingData = {
         deviceCode,
+        deviceName,
+        description,
         locationId,
         calibration,
         periode
       };
 
-      console.log('📤 Sending device setting:', settingData);
 
       return new Promise((resolve, reject) => {
         // Set up temporary listeners for this specific request

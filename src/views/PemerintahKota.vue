@@ -17,7 +17,6 @@ import 'vue3-toastify/dist/index.css'
 const locationsStore = useLocationStore()
 const floodSocket = useFloodSocket()
 
-// MENGGUNAKAN FUNCTIONS DARI STORE
 const {
   normalizeStatus,
   getStatusColor,

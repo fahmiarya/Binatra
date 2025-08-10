@@ -1,8 +1,16 @@
+/* @import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap'); */
+/* @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap'); */
+/* @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap'); */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 @import '@fortawesome/fontawesome-free/css/all.css';
 @import "tw-animate-css";
 @import "tailwindcss-primeui";
 
+
+@theme {
+  --font-display: "Inter", sans-serif;
+}
 
 @layer utilities {
   /* Chrome, Safari and Opera */
@@ -64,14 +72,6 @@
     --p-text-hover-muted-color: var(--p-surface-600);
 }
 
-/*
- * Dark Mode
- * Defaults to system, change the dark variant selector to match the CSS variable configuration.
- * For example;
- * @custom-variant dark (&:where(.app-dark, .app-dark *));
- * should match to;
- * :root[class="app-dark"]
-*/
 @media (prefers-color-scheme: dark) {
     :root {
         --p-primary-color: var(--p-primary-400);

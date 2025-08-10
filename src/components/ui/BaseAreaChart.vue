@@ -146,13 +146,9 @@ const formatTime = (timestamp) => {
 
 const handleFetchHistory = async () => {
   if (!selectedDevice.value || !selectedDevice.value.code) {
-    console.log("No device selected, clearing data");
-    // Clear data jika tidak ada device yang dipilih
     currentReading.value = null;
     return;
   }
-
-  console.log("Fetching data for device:", selectedDevice.value.code);
 
   try {
     await deviceStore.fetchSensorLogHistory(
@@ -181,7 +177,6 @@ const handleFetchHistory = async () => {
         deviceCode: selectedDevice.value.code
       };
 
-      console.log("⚠️ No data found for device:", selectedDevice.value.code);
     }
   } catch (error) {
     console.error("❌ Error fetching history for device:", selectedDevice.value.code, error);
@@ -219,7 +214,6 @@ const setupSocket = () => {
 
 // Update chart secara real-time
 const updateChartRealTime = (data) => {
-  // Hanya proses jika data dari device yang sedang dipilih
   if (!selectedDevice.value || data.deviceCode !== selectedDevice.value.code) {
     return;
   }
@@ -227,7 +221,6 @@ const updateChartRealTime = (data) => {
   const waterLevel = data.waterlevel || data.waterLevel || 0;
   const rainfall = data.rainfall || 0;
 
-  // Update current reading dengan validasi device
   currentReading.value = {
     waterLevel: waterLevel,
     rainfall: rainfall,
@@ -235,7 +228,6 @@ const updateChartRealTime = (data) => {
     deviceCode: data.deviceCode
   };
 
-  // Use store method untuk update chart data
   deviceStore.addRealTimeData({
     waterLevel: waterLevel,
     rainfall: rainfall,
@@ -245,21 +237,14 @@ const updateChartRealTime = (data) => {
 
 // Watch for device changes
 watch(selectedDevice, async (newDevice, oldDevice) => {
-  console.log("🔄 Device changed:", {
-    old: oldDevice?.code,
-    new: newDevice?.code
-  });
-
   // Socket.IO: Unsubscribe dari device lama
   if (socket && oldDevice && oldDevice.code) {
     socket.emit('unsubscribe-device', oldDevice.code);
-    console.log("📤 Unsubscribed from device:", oldDevice.code);
   }
 
   // Socket.IO: Subscribe ke device baru
   if (socket && newDevice && newDevice.code) {
     socket.emit('subscribe-device', newDevice.code);
-    console.log("📥 Subscribed to device:", newDevice.code);
   }
 
   // Fetch data untuk device baru
@@ -330,7 +315,6 @@ onUnmounted(() => {
     // Unsubscribe dari device saat ini
     if (selectedDevice.value && selectedDevice.value.code) {
       socket.emit('unsubscribe-device', selectedDevice.value.code);
-      console.log("📤 Unsubscribed from device on unmount:", selectedDevice.value.code);
     }
     socket.disconnect();
   }

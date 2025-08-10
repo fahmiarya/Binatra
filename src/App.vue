@@ -1,3 +1,5 @@
 <template>
-  <RouterView />
+  <div class="font-display">
+    <RouterView />
+  </div>
 </template>

@@ -4,13 +4,12 @@ import pinia from './plugins/pinia'
 import VueApexCharts from 'vue3-apexcharts'
 import { setupInterceptors } from './lib/axiosInterceptors'
 import PrimeVue from 'primevue/config';
-
 import App from './App.vue'
 import router from './router'
 
+
 const app = createApp(App)
 
-// Setup axios interceptors
 setupInterceptors()
 
 app.use(pinia)

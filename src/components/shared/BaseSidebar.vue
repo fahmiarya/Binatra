@@ -1,55 +1,31 @@
 <template>
   <aside class="text-gray-800 w-72 shadow-md bg-[#E7ECEF] pt-6">
-    <div>
-      <nav class="space-y-1">
-        <!-- Dashboard Link -->
+    <nav class="space-y-1 flex flex-col h-full">
+      <!-- Loop nav items -->
+      <div v-for="(item, index) in navItems" :key="index" :class="item.wrapperClass || ''">
         <router-link
-          to="/"
-          class="flex items-center p-3 pl-5 rounded-e-full transition-all duration-200"
-          :class="isActive('/') ? 'bg-[#274C77] text-white' : 'text-gray-700 hover:bg-gray-100'"
+          :to="item.route"
+          @click="item.onClick ? item.onClick() : null"
+          class="flex items-center p-3 pl-5 rounded-lg transition-all duration-200"
+          :class="
+            isActive(item.route)
+              ? 'bg-[#274C77] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          "
         >
           <span class="mr-3">
-            <i class="fas fa-home"></i>
+            <Icon v-if="item.icon" :icon="item.icon" class="text-3xl" />
+            <img
+              v-else-if="item.img"
+              :src="item.img"
+              alt=""
+              class="w-6 h-6"
+            />
           </span>
-          Dashboard
+          {{ item.label }}
         </router-link>
-
-        <!-- Location Links -->
-        <div v-for="(location, index) in locations" :key="index">
-          <router-link
-            :to="location.route"
-            @click="handleLocationClick(location.lat, location.lon, location.name)"
-            class="flex items-center p-3 pl-5 rounded-lg transition-all duration-200"
-            :class="
-              isActive(location.route)
-                ? 'bg-[#274C77] text-white'
-                : 'text-gray-700 hover:bg-gray-100'
-            "
-          >
-            <span class="mr-3">
-              <img :src="SurabayaPemda" alt="Surabaya Pemda" class="w-6 h-6" />
-            </span>
-            {{ location.name }}
-          </router-link>
-        </div>
-
-        <!-- Settings Link (Fixed at bottom) -->
-        <div class="mt-auto pt-20 fixed bottom-0">
-          <router-link
-            to="/settings"
-            class="flex items-center p-3 pl-5 rounded-lg transition-all duration-200"
-            :class="
-              isActive('/settings') ? 'bg-[#274C77] text-white' : 'text-gray-700 hover:bg-gray-100'
-            "
-          >
-            <span class="mr-3">
-              <i class="fas fa-cog"></i>
-            </span>
-            Settings
-          </router-link>
-        </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
   </aside>
 </template>
 
@@ -58,77 +34,72 @@ import { useWeatherStore } from '@/stores/weather.store'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import SurabayaPemda from '@/assets/images/surabaya-pemda.png'
+import { Icon } from '@iconify/vue'
 
+// store & route
 const weatherStore = useWeatherStore()
 const route = useRoute()
 
-const locations = [
-  {
-    name: 'Pemerintah Kota',
-    route: '/pemerintah-kota',
-  },
-  {
-    name: 'Dinas PU',
-    route: '/dinas-pekerjaan-umum',
-  },
-  {
-    name: 'Devices',
-    route: '/devices',
-  },
-  // {
-  //   name: 'Users',
-  //   route: '/users',
-  // },
-  // {
-  //   name: 'MQTT Credentials',
-  //   route: '',
-  // },
-  // {
-  //   name: 'Dinas Perhubungan (Dishub)',
-  //   route: '/dinas-perhubungan',
-  // },
-  // {
-  //   name: 'BPBD Jawa Timur',
-  //   route: '/bpbd-jawa-timur',
-  // },
-]
-
-// Function to check if current route is active
-const isActive = (routePath) => {
-  return route.path === routePath
-}
-
-// Handle location click with navigation and weather fetch
+// reusable click handler
 async function handleLocationClick(lat, lon, locationName) {
   try {
-    // Fetch weather data for the selected location
     await weatherStore.fetchWeather()
-
-    // Optional: Store selected location in local storage or store
     localStorage.setItem(
       'selectedLocation',
-      JSON.stringify({
-        name: locationName,
-        lat,
-        lon,
-      }),
+      JSON.stringify({ name: locationName, lat, lon })
     )
   } catch (error) {
     console.error('Error fetching weather data:', error)
   }
 }
 
-onMounted(async () => {
-  // Check if there's a stored location preference
-  const storedLocation = localStorage.getItem('selectedLocation')
+// array nav items
+const navItems = [
+  {
+    label: 'Dashboard',
+    route: '/',
+    icon: 'mdi:home',
+  },
+  {
+    label: 'Pemerintah Kota',
+    route: '/pemerintah-kota',
+    img: SurabayaPemda,
+    onClick: () => handleLocationClick(-7.2575, 112.7521, 'Pemerintah Kota'),
+  },
+  {
+    label: 'Dinas PU',
+    route: '/dinas-pekerjaan-umum',
+    img: SurabayaPemda,
+    onClick: () => handleLocationClick(-7.25, 112.75, 'Dinas PU'),
+  },
+  {
+    label: 'Devices',
+    route: '/devices',
+    icon: 'mdi:water-boiler',
+    onClick: () => handleLocationClick(-7.24, 112.74, 'Devices'),
+  },
+  // {
+  //   label: 'Settings',
+  //   route: '/settings',
+  //   icon: 'mdi:settings',
+  //   wrapperClass: 'mt-auto pt-20', // untuk fixed di bawah
+  // },
+]
 
+// check active route
+const isActive = (routePath) => route.path === routePath
+
+// initial load
+onMounted(async () => {
+  const storedLocation = localStorage.getItem('selectedLocation')
   if (storedLocation) {
-    const { lat, lon } = JSON.parse(storedLocation)
-    await handleLocationClick(lat, lon, 'Stored Location')
+    const { lat, lon, name } = JSON.parse(storedLocation)
+    await handleLocationClick(lat, lon, name)
   } else {
-    // Initial fetch for the first location as default
-    const defaultLocation = locations[0]
-    await handleLocationClick(defaultLocation.lat, defaultLocation.lon, defaultLocation.name)
+    const defaultLocation = navItems.find((item) => item.onClick)
+    if (defaultLocation) {
+      await defaultLocation.onClick()
+    }
   }
 })
 </script>
