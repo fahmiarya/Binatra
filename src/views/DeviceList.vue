@@ -26,7 +26,7 @@ const selectedStatus = ref({ name: 'Semua Status', status: '' },
 const statusOptions = ref([
   { name: 'Semua Status', status: '' },
   { name: 'Connected', status: 'CONNECTED' },
-  { name: 'Disconnected', code: 'DISCONNECTED' }
+  { name: 'Disconnected', status: 'DISCONNECTED' }
 ]);
 
 const rowsPerPage = ref([
