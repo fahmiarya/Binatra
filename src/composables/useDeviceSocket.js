@@ -79,7 +79,7 @@ export function useDeviceSocket() {
 
     // Device check result handler
     const deviceCheckCleanup = socket.on('device-check-result', (data) => {
-      console.log('✅ Device check result:', data);
+      if(data.device.status === 'CONNECTED') connectedDevices.value += 1
     });
 
     // Device check error handler

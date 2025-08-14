@@ -154,12 +154,10 @@ watch(deviceSocket.connectedDevices, (newValue) => {
   showDeviceDataUpdate();
 }, { immediate: true });
 
-// Watch for flood locations changes
 watch(() => floodSocket.floodLocations.value, (newLocations) => {
   floodLocations.value = newLocations || [];
 }, { deep: true, immediate: true });
 
-// Watch for recently updated locations to show visual feedback
 watch(() => floodSocket.recentlyUpdatedLocations.value, (newUpdates) => {
   if (newUpdates.length > 0) {
     showFloodDataUpdate();

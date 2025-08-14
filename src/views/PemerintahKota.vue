@@ -172,7 +172,6 @@ const pulsingDangerIcon = L.icon({
   className: 'danger-marker pulsing-marker'
 })
 
-// Function to get icon based on status (menggunakan function dari store)
 const getIconByStatus = (status, isRecentlyUpdated = false) => {
   const normalizedStatus = normalizeStatus(status) // DARI STORE
 
@@ -362,7 +361,6 @@ const pickSearchedLocation = (item) => {
 
 const searchKeyword = ref('')
 
-// VALID LOCATIONS MENGGUNAKAN FUNCTION DARI STORE
 const validLocations = computed(() =>
   filterValidLocations(combinedLocations.value, searchKeyword.value)
 )

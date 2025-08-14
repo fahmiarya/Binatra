@@ -33,7 +33,6 @@
 import { useWeatherStore } from '@/stores/weather.store'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import SurabayaPemda from '@/assets/images/surabaya-pemda.png'
 import { Icon } from '@iconify/vue'
 
 // store & route
@@ -61,22 +60,19 @@ const navItems = [
     icon: 'mdi:home',
   },
   {
-    label: 'Pemerintah Kota',
+    label: 'Lokasi',
     route: '/pemerintah-kota',
-    img: SurabayaPemda,
-    onClick: () => handleLocationClick(-7.2575, 112.7521, 'Pemerintah Kota'),
+    icon: 'mdi:location-radius',
   },
   {
-    label: 'Dinas PU',
+    label: 'Laporan',
     route: '/dinas-pekerjaan-umum',
-    img: SurabayaPemda,
-    onClick: () => handleLocationClick(-7.25, 112.75, 'Dinas PU'),
+    icon: 'mdi:report-areaspline',
   },
   {
-    label: 'Devices',
+    label: 'Perangkat',
     route: '/devices',
     icon: 'mdi:water-boiler',
-    onClick: () => handleLocationClick(-7.24, 112.74, 'Devices'),
   },
   // {
   //   label: 'Settings',

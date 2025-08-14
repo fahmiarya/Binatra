@@ -3,8 +3,6 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
 
-const DEV = true
-
 export const useLocationStore = defineStore('locations', () => {
   // State
   const locations = ref([])
@@ -169,9 +167,6 @@ export const useLocationStore = defineStore('locations', () => {
         }
       })
     }
-
-    console.log('result : ', result)
-
     return result
   }
 
@@ -251,50 +246,11 @@ export const useLocationStore = defineStore('locations', () => {
 
   // Ambil semua lokasi
   const fetchAllLocations = async () => {
-    if (DEV) {
-      locations.value = [
-        {
-          id: 1,
-          name: 'Test Location 1',
-          address: 'Jl. Test 1',
-          district: 'sukodono',
-          city: 'sidoarjo',
-          province: 'jawa timur',
-          latitude: -7.2575,
-          longitude: 112.7521,
-          status: 'AMAN',
-          amanMax: 79,
-          waspadaMin: 80,
-          waspadaMax: 149,
-          siagaMin: 150,
-          siagaMax: 199,
-          bahayaMin: 200,
-        },
-        {
-          id: 2,
-          name: 'Test Location 2',
-          address: 'Jl. Test 2',
-          district: 'waru',
-          city: 'sidoarjo',
-          province: 'jawa timur',
-          latitude: -7.2675,
-          longitude: 112.7621,
-          status: 'WASPADA',
-          amanMax: 79,
-          waspadaMin: 80,
-          waspadaMax: 149,
-          siagaMin: 150,
-          siagaMax: 199,
-          bahayaMin: 200,
-        },
-      ]
-      return
-    }
-
     try {
       isLoading.value = true
       error.value = null
       const res = await axios.get('/api/v1/locations')
+      console.log(res.data.data)
       locations.value = res.data.data
     } catch (err) {
       console.error('❌ Gagal ambil lokasi:', err)
