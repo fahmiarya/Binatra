@@ -53,11 +53,6 @@
                 ]">
                   {{ location.currentStatus }}
                 </span>
-                <!-- Show update indicator -->
-                <span v-if="recentlyUpdatedLocations.includes(location.id)"
-                      class="text-xs bg-blue-100 text-blue-600 px-1 py-0.5 rounded animate-pulse">
-                  📡 Live
-                </span>
               </div>
               <p class="text-sm text-gray-600 mb-2">{{ location.address }}</p>
 
@@ -100,21 +95,11 @@
               <span>{{ location.bahayaMin || 0 }}</span>
             </div>
             <div class="flex justify-between text-xs text-gray-400">
-              <span>AMAN</span>
-              <span>WASPADA</span>
-              <span>SIAGA</span>
-              <span>BAHAYA</span>
+              <span>Aman</span>
+              <span>Waspada</span>
+              <span>Siaga</span>
+              <span>Bahaya</span>
             </div>
-          </div>
-
-          <!-- Subscribe/Unsubscribe button -->
-          <div class="mt-2 text-right">
-            <button
-              @click="toggleLocationSubscription(location.id)"
-              class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
-            >
-              {{ subscribedLocations.has(location.id) ? '🔕 Unsubscribe' : '🔔 Subscribe' }}
-            </button>
           </div>
         </div>
 
@@ -143,6 +128,7 @@
 <script setup>
 import BaseCard from '@/components/ui/BaseCard.vue';
 import { useFloodSocket } from '@/composables/useFloodSocket.js';
+import { formatHistoryTime } from '@/lib/formaters';
 import { useLocationStore } from '@/stores/locationStore.js';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 
@@ -154,14 +140,11 @@ const {
   floodLocations,
   recentlyUpdatedLocations,
   loading,
-  subscribeToLocation,
-  unsubscribeFromLocation,
   formatLastUpdate,
   currentLocationStatus,
 } = useFloodSocket();
 
 // Local state
-const subscribedLocations = ref(new Set());
 const loadingMoreLocations = ref(false);
 
 // Scroll containers
@@ -180,7 +163,6 @@ const props = defineProps({
   }
 });
 
-// Computed - Enhanced floodNotifications dengan data dari store
 const floodNotifications = computed(() => {
   // Combine props notifications dengan history dari store
   const historyNotifications = locationStore.locationStatusHistory.map(history => ({
@@ -239,9 +221,6 @@ const loadMoreLocations = async () => {
 
   loadingMoreLocations.value = true;
 
-  // Simulate loading more locations (sesuaikan dengan API lokasi Anda)
-  console.log(`📍 Loading more locations...`);
-
   try {
     // Jika ada API untuk locations, panggil di sini
     // const moreLocations = await fetchMoreLocations();
@@ -285,6 +264,7 @@ const formatNotificationTitle = (history) => {
   }
 };
 
+
 const formatTimeframe = (history) => {
   const duration = history.duration || 0;
 
@@ -305,28 +285,6 @@ const formatTimeframe = (history) => {
   }
 };
 
-const formatHistoryTime = (timestamp) => {
-  if (!timestamp) return 'N/A';
-
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMinutes < 1) return 'baru saja';
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
-  if (diffHours < 24) return `${diffHours} hour ago`;
-  if (diffDays < 7) return `${diffDays} day ago`;
-
-  return date.toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
-};
-
 const getSeverityFromStatus = (status) => {
   switch (status) {
     case 'BAHAYA': return 'high';
@@ -337,20 +295,6 @@ const getSeverityFromStatus = (status) => {
   }
 };
 
-// Location subscription management
-const toggleLocationSubscription = (locationId) => {
-  if (subscribedLocations.value.has(locationId)) {
-    unsubscribeFromLocation(locationId);
-    subscribedLocations.value.delete(locationId);
-    console.log(`📍 Unsubscribed from location: ${locationId}`);
-  } else {
-    subscribeToLocation(locationId);
-    subscribedLocations.value.add(locationId);
-    console.log(`📍 Subscribed to location: ${locationId}`);
-  }
-};
-
-// Styling functions (tetap sama)
 const getLocationCardStyle = (status) => {
   switch (status) {
     case 'BAHAYA':

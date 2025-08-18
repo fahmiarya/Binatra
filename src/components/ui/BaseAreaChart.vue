@@ -4,17 +4,23 @@ import { useDeviceStore } from '@/stores/deviceStore';
 import { useDeviceSocket } from '@/composables/useDeviceSocket.js';
 import { storeToRefs } from 'pinia';
 import { io } from 'socket.io-client';
+import DatePicker from './DatePicker.vue';
+import { debounce } from 'lodash';
+import AutoComplete from './AutoComplete.vue';
+import BaseButton from './BaseButton.vue';
+import BaseCard from './BaseCard.vue';
 
 const deviceStore = useDeviceStore()
-const { devices } = storeToRefs(deviceStore)
+const { devices, loadArr } = storeToRefs(deviceStore)
 const deviceSocket = useDeviceSocket();
 const currentReading = ref(null);
-const statistics = ref(null);
-const selectedDevice = ref(null); // Change to null initially
-const dateRange = ref({
-  start: new Date().toISOString().split('T')[0],
-  end: new Date().toISOString().split('T')[0]
-});
+const selectedDevice = ref(null);
+const dateRange = ref([new Date()]);
+const lazyParams = ref({
+  first: 0,
+  rows: 10,
+  query: ''
+})
 
 // Socket.IO connection
 let socket = null;
@@ -33,16 +39,7 @@ const options = ref({
       }
     },
     toolbar: {
-      show: true,
-      tools: {
-        download: true,
-        selection: true,
-        zoom: true,
-        zoomin: true,
-        zoomout: true,
-        pan: true,
-        reset: true
-      }
+      show: false,
     }
   },
   xaxis: {
@@ -127,6 +124,10 @@ const series = computed(() => {
   ]
 });
 
+const selectedDate = debounce(() => {
+  handleFetchHistory()
+}, 500)
+
 // Helper function untuk format timestamp dengan timezone Indonesia
 const formatTime = (timestamp) => {
   if (!timestamp) return 'N/A';
@@ -139,7 +140,7 @@ const formatTime = (timestamp) => {
       minute: '2-digit',
       second: '2-digit'
     });
-  } catch (error) {
+  } catch (err) {
     return 'N/A';
   }
 };
@@ -153,21 +154,21 @@ const handleFetchHistory = async () => {
   try {
     await deviceStore.fetchSensorLogHistory(
       selectedDevice.value.code,
-      dateRange.value.start,
-      dateRange.value.end
+      dateRange.value
     );
 
     // Update currentReading dari store setelah fetch berhasil
     const logs = deviceStore.sensorLogs;
+
+    console.log("sensor logs : ", deviceStore.sensorLogs)
+
     if (logs && logs.length > 0) {
       currentReading.value = {
         waterLevel: logs[0].waterLevel,
         rainfall: logs[0].rainfall,
         timestamp: logs[0].timestamp,
-        deviceCode: selectedDevice.value.code // Tambahkan device code untuk validasi
+        deviceCode: selectedDevice.value.code
       };
-
-      console.log("✅ Current reading updated for device:", selectedDevice.value.code, currentReading.value);
     } else {
       // Jika tidak ada data, clear current reading
       currentReading.value = {
@@ -184,6 +185,21 @@ const handleFetchHistory = async () => {
     currentReading.value = null;
   }
 }
+
+const search = debounce(async (event) => {
+  const { query } = event
+
+  console.log(event)
+
+  lazyParams.value.query = query;
+  lazyParams.value.first = 0;
+
+  try {
+    await deviceStore.getDataByScroll(query)
+  } catch (error) {
+    console.error('Error loading lazy data:', error);
+  }
+}, 500);
 
 // Setup Socket.IO untuk real-time updates
 const setupSocket = () => {
@@ -250,11 +266,6 @@ watch(selectedDevice, async (newDevice, oldDevice) => {
   // Fetch data untuk device baru
   await handleFetchHistory();
 });
-
-// Watch for date range changes
-watch(() => [dateRange.value.start, dateRange.value.end], async () => {
-  await handleFetchHistory();
-}, { deep: true });
 
 watch(deviceSocket.deviceNotificationData, (newData) => {
   if (newData) {
@@ -323,66 +334,63 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h3>Real-time Water Level Monitor</h3>
-      <div style="display: flex; gap: 15px; align-items: center;">
-        <!-- Connection Status -->
-        <div :style="{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '5px',
-          padding: '5px 10px',
-          borderRadius: '15px',
-          backgroundColor: selectedDevice?.status === 'CONNECTED' ? '#e8f5e8' : '#fce8e8',
-          color: selectedDevice?.status === 'CONNECTED' ? '#4caf50' : '#f44336',
-          fontSize: '12px'
-        }">
-          <span :style="{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: selectedDevice?.status === 'CONNECTED' ? '#4caf50' : '#f44336'
-          }"></span>
-          {{ selectedDevice?.status === 'CONNECTED' ? 'Connected' : 'Disconnected' }}
+    <div
+      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; margin-top: 20px;">
+      <BaseCard title="Tinggi Air">
+        <div class="py-5">
+          <p class="text-3xl font-bold text-primary-600">{{ currentReading?.waterLevel || 0 }} cm</p>
         </div>
+      </BaseCard>
 
-        <!-- Device Selector -->
-        <select v-model="selectedDevice" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #ddd;">
-          <option v-for="device in devices" :key="device.id" :value="device">
-            {{ device.code }}
-          </option>
-        </select>
-      </div>
+      <BaseCard title="Curah Hujan">
+        <div class="py-5">
+          <p class="text-3xl font-bold text-primary-600">{{ currentReading?.rainfall || 0 }} mm</p>
+        </div>
+      </BaseCard>
     </div>
 
-    <!-- Statistics Cards -->
-    <div
-      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-      <div
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px;">
-        <h4 style="margin: 0 0 5px 0; font-size: 14px;">Current Water Level</h4>
-        <div style="font-size: 24px; font-weight: bold;">{{ currentReading?.waterLevel || 0 }} cm</div>
-        <div style="font-size: 12px; opacity: 0.8;">{{ formatTime(currentReading?.timestamp) }}</div>
-      </div>
+    <section class="flex gap-x-5 my-5">
+      <DatePicker v-model="dateRange" selectionMode="range" :manualInput="false" showIcon iconDisplay="input"
+        @update:model-value="selectedDate" dateFormat="dd/mm/yy" />
 
-      <div
-        style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 10px;">
-        <h4 style="margin: 0 0 5px 0; font-size: 14px;">Current Rainfall</h4>
-        <div style="font-size: 24px; font-weight: bold;">{{ currentReading?.rainfall || 0 }} mm</div>
-        <div style="font-size: 12px; opacity: 0.8;">24h Total: {{ statistics?.totalRainfall?.toFixed(1) || 0 }} mm</div>
-      </div>
-    </div>
+      <AutoComplete v-model="selectedDevice" optionLabel="name" :suggestions="devices" @complete="search" dropdown
+        :loading="loadArr.includes('GET_DEVICES_SCROLL')" :virtualScrollerOptions="{
+          itemSize: 38,
+          showLoader: loadArr.includes('GET_DEVICES_SCROLL'),
+          delay: 300,
+          lazy: true,
+        }" placeholder="Pilih atau cari perangkat..." emptyMessage="Tidak ada perangkat ditemukan">
+        <template #option="{ option }">
+          <div class="flex items-center justify-between w-full py-2 transition-colors">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900 truncate">
+                {{ option.name }}
+              </p>
+            </div>
+            <span
+              class="inline-block w-2 h-2 rounded-full"
+              :class="{
+                'bg-green-500': option.status === 'CONNECTED',
+                'bg-red-500': option.status === 'DISCONNECTED',
+                'animate-pulse' : option.status === 'CONNECTED',
+              }"
+            ></span>
+          </div>
+        </template>
 
-    <!-- Date Range Controls -->
-    <div
-      style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-      <input type="date" v-model="dateRange.start" style="padding: 5px; border: 1px solid #ddd; border-radius: 4px;" />
-      <span>to</span>
-      <input type="date" v-model="dateRange.end" style="padding: 5px; border: 1px solid #ddd; border-radius: 4px;" />
-    </div>
+        <template #empty>
+          <div class="flex items-center justify-center py-4 text-gray-500">
+            <span>Tidak ada perangkat ditemukan</span>
+          </div>
+        </template>
+      </AutoComplete>
+
+      <BaseButton label="Export" @click="deviceStore.exportCSV(selectedDevice.code)" />
+    </section>
+
 
     <!-- Chart -->
-    <apexchart v-if="selectedDevice" type="area" height="400" :options="options" :series="series"></apexchart>
+    <apexchart v-if="selectedDevice && devices.length" type="area" height="400" :options="options" :series="series"></apexchart>
 
     <!-- No device selected message -->
     <div v-else style="text-align: center; padding: 40px; color: #666;">

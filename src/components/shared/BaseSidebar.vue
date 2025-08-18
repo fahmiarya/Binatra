@@ -1,17 +1,13 @@
 <template>
   <aside class="text-gray-800 w-72 shadow-md bg-[#E7ECEF] pt-6">
-    <nav class="space-y-1 flex flex-col h-full">
+    <nav class="space-y-1 flex flex-col h-full px-2">
       <!-- Loop nav items -->
       <div v-for="(item, index) in navItems" :key="index" :class="item.wrapperClass || ''">
         <router-link
           :to="item.route"
           @click="item.onClick ? item.onClick() : null"
           class="flex items-center p-3 pl-5 rounded-lg transition-all duration-200"
-          :class="
-            isActive(item.route)
-              ? 'bg-[#274C77] text-white'
-              : 'text-gray-700 hover:bg-gray-100'
-          "
+          :class="getItemClasses(item)"
         >
           <span class="mr-3">
             <Icon v-if="item.icon" :icon="item.icon" class="text-3xl" />
@@ -31,7 +27,7 @@
 
 <script setup>
 import { useWeatherStore } from '@/stores/weather.store'
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 
@@ -52,7 +48,7 @@ async function handleLocationClick(lat, lon, locationName) {
   }
 }
 
-// array nav items
+// array nav items - SESUAIKAN dengan router yang sebenarnya
 const navItems = [
   {
     label: 'Dashboard',
@@ -71,7 +67,7 @@ const navItems = [
   },
   {
     label: 'Perangkat',
-    route: '/devices',
+    route: '/device',
     icon: 'mdi:water-boiler',
   },
   // {
@@ -82,8 +78,34 @@ const navItems = [
   // },
 ]
 
-// check active route
-const isActive = (routePath) => route.path === routePath
+// Get current path untuk active state detection (sama seperti contoh yang benar)
+const currentPath = computed(() => route.path)
+
+// Check if item is active (menggunakan logika yang sama dengan contoh yang benar)
+const isItemActive = (item) => {
+  if (!item.route) return false
+
+  // Exact match untuk root path
+  if (item.route === '/' && currentPath.value === '/') {
+    return true
+  }
+
+  // Untuk path selain root, gunakan startsWith
+  if (item.route !== '/' && item.route !== '#') {
+    return currentPath.value.startsWith(item.route)
+  }
+
+  return false
+}
+
+// Classes untuk item (menggunakan pola yang sama dengan contoh yang benar)
+const getItemClasses = (item) => {
+  const isActive = isItemActive(item)
+  return {
+    'bg-[#274C77] text-white': isActive,
+    'text-gray-700 hover:bg-gray-100': !isActive
+  }
+}
 
 // initial load
 onMounted(async () => {

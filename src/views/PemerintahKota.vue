@@ -13,9 +13,25 @@ import { useLocationStore } from '@/stores/locationStore'
 import { useFloodSocket } from '@/composables/useFloodSocket.js'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
+import SelectButton from '@/components/ui/SelectButton.vue'
+import { Icon } from '@iconify/vue'
+import LocationList from './LocationList.vue'
+import InputText from '@/components/ui/InputText.vue'
+import InputNumber from '@/components/ui/InputNumber.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const locationsStore = useLocationStore()
 const floodSocket = useFloodSocket()
+const selectedDisplay = ref('mdi:map')
+
+const displayOptions = ref([
+ 'mdi:view-list',
+ 'mdi:map'
+])
+
+const displayChange = (newVal) => {
+  selectedDisplay.value = newVal
+}
 
 const {
   normalizeStatus,
@@ -553,43 +569,56 @@ onMounted(async () => {
               <div class="w-3 h-3 bg-red-500 rounded-full"></div>
               Bahaya: {{ locationStats.bahaya }}
             </span>
-            <span class="text-gray-600">
+            <span class="text-gray-900 font-medium">
               Total: {{ locationStats.total }}
             </span>
           </div>
 
-          <div class="relative w-full mt-4">
-            <input v-model="searchQuery" placeholder="Cari lokasi, contoh: Surabaya, Bandung..."
-              class="border px-3 py-1 w-full" />
+          <template v-if="selectedDisplay === 'mdi:map'">
+            <div class="relative w-full mt-4">
+              <!-- <input v-model="searchQuery" placeholder="Cari lokasi, contoh: Surabaya, Bandung..."
+                class="border px-3 py-1 w-full" /> -->
 
-            <!-- Suggestion list menggunakan search dari store -->
-            <div v-if="searchResults.length"
-              class="absolute top-full left-0 right-0 border bg-white max-h-48 overflow-auto z-50 shadow">
-              <div v-for="result in searchResults" :key="result.lat + result.lon" @click="pickSearchedLocation(result)"
-                class="p-2 hover:bg-gray-100 cursor-pointer text-sm">
-                {{ result.name }}
+              <InputText v-model="searchQuery" placeholder="Cari Lokasi" class="w-full" />
+
+              <!-- Suggestion list menggunakan search dari store -->
+              <div v-if="searchResults.length"
+                class="absolute top-full left-0 right-0 border bg-white max-h-48 overflow-auto z-50 shadow">
+                <div v-for="result in searchResults" :key="result.lat + result.lon" @click="pickSearchedLocation(result)"
+                  class="p-2 hover:bg-gray-100 cursor-pointer text-sm">
+                  {{ result.name }}
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Loading indicator -->
-          <div v-if="locationsStore.isLoading || floodSocket.loading.value" class="mt-2 text-blue-600 text-sm">
-            Memuat data lokasi...
-          </div>
+            <!-- Loading indicator -->
+            <div v-if="locationsStore.isLoading || floodSocket.loading.value" class="mt-2 text-blue-600 text-sm">
+              Memuat data lokasi...
+            </div>
 
-          <!-- Error message -->
-          <div v-if="locationsStore.error" class="mt-2 text-red-600 text-sm">
-            {{ locationsStore.error }}
-          </div>
+            <!-- Error message -->
+            <div v-if="locationsStore.error" class="mt-2 text-red-600 text-sm">
+              {{ locationsStore.error }}
+            </div>
 
-          <div class="mt-3 p-3 bg-blue-50 border border-blue-300 text-blue-800 rounded text-sm">
-            ℹ️ Klik pada peta untuk menambah lokasi baru. Anda juga bisa mencari lokasi lewat kolom
-            pencarian di atas.
-          </div>
+            <div class="mt-3 p-3 bg-blue-50 border border-blue-300 text-blue-800 rounded text-sm">
+              ℹ️ Klik pada peta untuk menambah lokasi baru. Anda juga bisa mencari lokasi lewat kolom
+              pencarian di atas.
+            </div>
+          </template>
         </BaseCard>
       </div>
+
+      <div class="w-full flex justify-end mb-5">
+        <SelectButton v-model="selectedDisplay" :options="displayOptions">
+          <template #option="slotProps">
+              <Icon :icon="slotProps.option" class="size-5"/>
+            </template>
+        </SelectButton>
+      </div>
+
       <div class="w-full h-screen relative z-0">
-        <LMap ref="mapRef" :zoom="11" :center="center" class="h-full w-full" @ready="onMapReady"
+        <LMap v-if="selectedDisplay === 'mdi:map'" ref="mapRef" :zoom="11" :center="center" class="h-full w-full" @ready="onMapReady"
           @click="handleMapClick">
           <LTileLayer url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" attribution="© OpenTopoMap contributors"
             :max-zoom="16" :min-zoom="3" />
@@ -654,49 +683,52 @@ onMounted(async () => {
             <LPopup> Lokasi baru </LPopup>
           </LMarker>
         </LMap>
+
+        <LocationList v-else @add="displayChange"/>
       </div>
 
       <BaseCard v-if="formVisible" title="Tambah Lokasi Baru" customClass="w-full mt-4">
-        <div class="grid grid-cols-2 gap-2 mb-4">
-          <input v-model="form.name" placeholder="Nama Lokasi" class="border p-2" />
-          <input v-model="form.address" placeholder="Alamat" class="border p-2" />
-          <input v-model="form.district" placeholder="Kecamatan" class="border p-2" />
-          <input v-model="form.city" placeholder="Kota" class="border p-2" />
-          <input v-model="form.province" placeholder="Provinsi" class="border p-2" />
+        <div class="grid grid-cols-2 gap-x-2 gap-y-5 my-4">
+          <InputText fluid v-model="form.name" placeholder="Nama Lokasi" class="w-full" />
+          <InputText fluid v-model="form.address" placeholder="Alamat" class="w-full" />
+          <InputText fluid v-model="form.district" placeholder="Kecamatan" class="w-full" />
+          <InputText fluid v-model="form.city" placeholder="Kota" class="w-full" />
+          <InputText fluid v-model="form.province" placeholder="Provinsi" class="w-full" />
+          <InputText fluid v-model="form.latitude" readonly placeholder="Latitude" class="w-full" />
+          <InputText fluid v-model="form.longitude" readonly placeholder="Cari Lokasi" class="w-full" />
         </div>
 
-        <div class="grid grid-cols-3 gap-2 mb-4">
-          <div>
-            <label class="block text-xs mb-1">Batas Aman Maks</label>
-            <input v-model.number="form.amanMax" placeholder="Aman Max" type="number" class="border p-2 w-full" />
+        <div class="grid grid-cols-3 gap-x-5 gap-y-5 mb-4">
+          <div class="w-full">
+            <label class="block text-xs mb-1">Batas Aman Maksimal</label>
+            <InputNumber fluid v-model="form.amanMax" placeholder="Batas Aman Maksimal" showButtons class="w-full" />
           </div>
-          <div>
-            <label class="block text-xs mb-1">Batas Waspada Min</label>
-            <input disabled v-model.number="form.waspadaMin" placeholder="Waspada Min" type="number"
-              class="border p-2 w-full" />
+          <div class="w-full">
+            <label class="block text-xs mb-1">Batas Waspada Minimal</label>
+            <InputNumber fluid v-model="form.waspadaMin" placeholder="Batas Aman Minimal" showButtons class="w-full" />
           </div>
-          <div>
-            <label class="block text-xs mb-1">Batas Waspada Maks</label>
-            <input v-model.number="form.waspadaMax" placeholder="Waspada Max" type="number" class="border p-2 w-full" />
+          <div class="w-full">
+            <label class="block text-xs mb-1">Batas Waspada Maksimal</label>
+            <InputNumber fluid v-model="form.waspadaMax" placeholder="Waspada Maksimal" showButtons class="w-full" />
           </div>
-          <div>
-            <label class="block text-xs mb-1">Batas Siaga Min</label>
-            <input disabled v-model.number="form.siagaMin" placeholder="Siaga Min" type="number"
-              class="border p-2 w-full" />
+          <div class="w-full">
+            <label class="block text-xs mb-1">Batas Siaga Minimal</label>
+            <InputNumber fluid readonly="" v-model="form.siagaMin" placeholder="Siaga Minimal" showButtons type="number"
+              class="w-full" />
           </div>
-          <div>
-            <label class="block text-xs mb-1">Batas Siaga Maks</label>
-            <input v-model.number="form.siagaMax" placeholder="Siaga Max" type="number" class="border p-2 w-full" />
+          <div class="w-full">
+            <label class="block text-xs mb-1">Batas Siaga Maksimal</label>
+            <InputNumber fluid  v-model="form.siagaMax" placeholder="Siaga Maksimal" showButtons class="w-full" />
           </div>
-          <div>
-            <label class="block text-xs mb-1">Batas Bahaya Min</label>
-            <input disabled v-model.number="form.bahayaMin" placeholder="Bahaya Min" type="number"
-              class="border p-2 w-full" />
+          <div class="w-full">
+            <label class="block text-xs mb-1">Batas Bahaya Minimal</label>
+            <InputNumber fluid readonly="" v-model="form.bahayaMin" placeholder="Bahaya Minimal" showButtons type="number"
+              class="w-full" />
           </div>
         </div>
 
         <p class="text-sm mb-4">Latitude: {{ form.latitude }}, Longitude: {{ form.longitude }}</p>
-        <div class="flex justify-between items-center mt-4">
+        <div class="flex justify-end items-center gap-x-5 mt-4">
           <button @click="batalForm" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
             Batal
           </button>

@@ -11,6 +11,13 @@ export const useLocationStore = defineStore('locations', () => {
   const isLoadingHistory = ref(false)
   const error = ref(null)
   const historyError = ref(null)
+  const loadArr = ref([])
+  const pagination = ref({
+    page: 1,
+    limit : 0,
+    totalItems: 0,
+    totalPages: 0,
+  })
 
   // Pagination state
   const currentPage = ref(1)
@@ -187,8 +194,6 @@ export const useLocationStore = defineStore('locations', () => {
     combinedLocations.forEach((location) => {
       const status = (location.currentStatus || location.status || 'AMAN').toUpperCase()
 
-      console.log('status list : ', status)
-
       switch (status) {
         case 'AMAN':
           stats.aman++
@@ -230,7 +235,6 @@ export const useLocationStore = defineStore('locations', () => {
     )
   }
 
-  // ===== COMPUTED GETTERS =====
 
   // Getter untuk valid locations (locations yang bisa di-map)
   const validLocations = computed(() => {
@@ -242,26 +246,35 @@ export const useLocationStore = defineStore('locations', () => {
     return calculateLocationStats(locations.value)
   })
 
-  // ===== EXISTING FUNCTIONS =====
 
-  // Ambil semua lokasi
-  const fetchAllLocations = async () => {
+  const fetchAllLocations = async (search = '', limit = 10, page = 1, status = '', sortBy = 'id', sortOrder = 'asc') => {
     try {
-      isLoading.value = true
+      loadArr.value.push("GET_ALL_LOCATIONS")
       error.value = null
-      const res = await axios.get('/api/v1/locations')
-      console.log(res.data.data)
+      const res = await axios.get('/api/v1/locations', {
+        params : {
+          search,
+          limit,
+          status,
+          page,
+          sortBy,
+          sortOrder : sortOrder === 1 ? 'asc' : 'desc'
+        }
+      });
+
       locations.value = res.data.data
+      pagination.value.page = res.data.page
+      pagination.value.limit = res.data.limit
+      pagination.value.totalItems = res.data.totalItems
+      pagination.value.totalPages = res.data.totalPages
     } catch (err) {
-      console.error('❌ Gagal ambil lokasi:', err)
       error.value = err.message
     } finally {
-      isLoading.value = false
+      loadArr.value.splice(loadArr.value.indexOf('GET_ALL_LOCATIONS'), 1);
     }
   }
 
-  // Hapus lokasi
-  const removeLocation = async (id) => {
+  const deleteLocation = async (id) => {
     try {
       await axios.delete(`/api/v1/locations/${id}`)
       await fetchAllLocations()
@@ -414,14 +427,11 @@ export const useLocationStore = defineStore('locations', () => {
     return await fetchLocationStatusHistory(1, pageSize.value, true)
   }
 
-  // Add new history item (for real-time updates)
   const addHistoryItem = (newItem) => {
-    // Add to beginning of array (newest first)
     locationStatusHistory.value.unshift(newItem)
     totalHistory.value += 1
   }
 
-  // Clear history data
   const clearHistory = () => {
     locationStatusHistory.value = []
     currentPage.value = 1
@@ -445,6 +455,8 @@ export const useLocationStore = defineStore('locations', () => {
     locations,
     locationStatusHistory,
     isLoading,
+    loadArr,
+    pagination,
     isLoadingHistory,
     error,
     historyError,
@@ -479,7 +491,7 @@ export const useLocationStore = defineStore('locations', () => {
     getHistoryByLocationId,
     getRecentHistory,
     fetchAllLocations,
-    removeLocation,
+    deleteLocation,
     createLocation,
     updateLocation,
     reverseGeocode,

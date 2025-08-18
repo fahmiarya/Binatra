@@ -1,17 +1,12 @@
 <template>
   <AuthenticatedLayout>
-    <!-- Bagian kiri (2/3 layar) -->
-    <div class="w-full flex flex-col gap-10">
-      <!-- Baris pertama -->
-      <div class="grid grid-cols-2 gap-8">
-        <!-- Weather Card -->
+    <div class="w-full flex flex-col gap-6 md:gap-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
         <BaseCard title="Cuaca Surabaya">
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-center mt-5">
             <div>
-              <p class="text-sm text-gray-500 mb-3">{{ location }}</p>
-
               <div class="mb-2">
-                <span class="text-3xl font-medium text-[#516F91]">{{ main?.temp }}°C</span>
+                <span class="text-2xl md:text-3xl font-medium text-[#516F91]">{{ main?.temp }}°C</span>
                 <div class="text-xs text-gray-500 mt-2">
                   <span>3°C</span> / <span>12°C</span>
                 </div>
@@ -22,30 +17,30 @@
             </div>
 
             <div class="mt-1">
-              <img :src="CloudIcon" alt="Weather" class="w-28" />
+              <img :src="CloudIcon" alt="Weather" class="w-20 md:w-28" />
             </div>
           </div>
         </BaseCard>
 
         <!-- Jumlah Lokasi Banjir -->
         <BaseCard title="Jumlah Lokasi Status Banjir" customClass="scrollbar-hidden" :showTopRightArrow="true">
-          <div class="flex items-center min-h-[120px]">
+          <div class="flex items-center min-h-[100px] md:min-h-[120px]">
             <div class="flex flex-col">
-              <span class="text-4xl font-medium text-[#516F91]">{{ totalFloodLocations }}</span>
+              <span class="text-3xl md:text-4xl font-medium text-[#516F91]">{{ totalFloodLocations }}</span>
             </div>
           </div>
         </BaseCard>
       </div>
 
       <!-- Jumlah Device Terhubung -->
-      <div class="grid grid-cols-2 gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
         <!-- Device Card -->
         <BaseCard title="Jumlah Device Terhubung">
-          <div class="flex items-center min-h-[120px]">
+          <div class="flex items-center min-h-[100px] md:min-h-[120px]">
             <div class="flex flex-col">
-              <p class="text-lg text-[#274C77] font-bold">
+              <p class="text-base md:text-lg text-[#274C77] font-bold">
                 {{ deviceConnected || 0 }}
-                <span class="text-gray-500 font-normal">
+                <span class="text-gray-500 font-normal ml-2">
                   Connected devices
                 </span>
               </p>
@@ -55,9 +50,9 @@
 
         <!-- Jumlah Lokasi Peringatan Banjir -->
         <BaseCard title="Jumlah Lokasi Peringatan Banjir" customClass="text-sm">
-          <div class="flex items-center min-h-[120px]">
+          <div class="flex items-center min-h-[100px] md:min-h-[120px]">
             <div class="flex flex-col">
-              <span class="text-4xl font-medium text-[#516F91]">{{ locationsTotal }}</span>
+              <span class="text-3xl md:text-4xl font-medium text-[#516F91]">{{ locationsTotal }}</span>
             </div>
           </div>
         </BaseCard>
@@ -91,13 +86,12 @@ import { useDeviceSocket } from '@/composables/useDeviceSocket.js';
 const weatherStore = useWeatherStore();
 const deviceStore = useDeviceStore();
 const locationStore = useLocationStore();
-const { weather, main, location } = storeToRefs(weatherStore);
+const { weather, main } = storeToRefs(weatherStore);
 
 // Initialize composables
 const floodSocket = useFloodSocket();
 const deviceSocket = useDeviceSocket();
 
-// State (keeping original variable names)
 const sensorData = reactive({
   waterlevel: null,
   rain: null,

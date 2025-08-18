@@ -19,7 +19,7 @@
           </SecondaryButton>
         </div>
         <div class="flex gap-2 items-center">
-          <span class="select-none w-32 text-end">{{ first }} - {{ first - 1 + rows }} of {{ totalRecords }}</span>
+          <span class="select-none w-32 text-end">{{ first }} - {{ Math.min(first + rows - 1, totalRecords) }} of {{ totalRecords }}</span>
           <BaseSelect
             :modelValue="rows"
             :options="props.rowOptions"

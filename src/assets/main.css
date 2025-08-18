@@ -1,6 +1,3 @@
-/* @import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap'); */
-/* @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap'); */
-/* @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap'); */
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 @import '@fortawesome/fontawesome-free/css/all.css';
@@ -10,6 +7,10 @@
 
 @theme {
   --font-display: "Inter", sans-serif;
+}
+
+.p-component, .p-inputtext {
+  font-family: inherit;
 }
 
 @layer utilities {
@@ -24,33 +25,35 @@
   }
 }
 
-
-/* Primary and Surface Palettes */
 :root {
-    --p-primary-50: #ecfdf5;
-    --p-primary-100: #d1fae5;
-    --p-primary-200: #a7f3d0;
-    --p-primary-300: #6ee7b7;
-    --p-primary-400: #34d399;
-    --p-primary-500: #10b981;
-    --p-primary-600: #059669;
-    --p-primary-700: #047857;
-    --p-primary-800: #065f46;
-    --p-primary-900: #064e3b;
-    --p-primary-950: #022c22;
-    --p-surface-0: #ffffff;
-    --p-surface-50: #fafafa;
-    --p-surface-100: #f4f4f5;
-    --p-surface-200: #e4e4e7;
-    --p-surface-300: #d4d4d8;
-    --p-surface-400: #a1a1aa;
-    --p-surface-500: #71717a;
-    --p-surface-600: #52525b;
-    --p-surface-700: #3f3f46;
-    --p-surface-800: #27272a;
-    --p-surface-900: #18181b;
-    --p-surface-950: #09090b;
-    --p-content-border-radius: 6px;
+  /* Primary - turunan dari #274C77 */
+  --p-primary-50:  #f2f6fa;
+  --p-primary-100: #d9e4f2;
+  --p-primary-200: #b0c8e0;
+  --p-primary-300: #88accf;
+  --p-primary-400: #5f90bd;
+  --p-primary-500: #274C77;
+  --p-primary-600: #214165;
+  --p-primary-700: #1b3554;
+  --p-primary-800: #152943;
+  --p-primary-900: #101f33;
+  --p-primary-950: #0a1422;
+
+  /* Surface - netral abu-abu kebiruan */
+  --p-surface-0:   #ffffff;
+  --p-surface-50:  #f7f8fa;
+  --p-surface-100: #eceef1;
+  --p-surface-200: #d8dbe0;
+  --p-surface-300: #c4c8cf;
+  --p-surface-400: #9ea3ad;
+  --p-surface-500: #7a808c;
+  --p-surface-600: #5c6370;
+  --p-surface-700: #454b57;
+  --p-surface-800: #2e333d;
+  --p-surface-900: #1c1f26;
+  --p-surface-950: #0e1014;
+
+  --p-content-border-radius: 6px;
 }
 
 /* Light */

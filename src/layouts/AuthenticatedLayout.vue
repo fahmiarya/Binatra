@@ -41,9 +41,6 @@ import { useRoute } from 'vue-router'
 // Emits
 const emit = defineEmits(['flood-data-updated']);
 
-// Simulating loading process
-// const isLoading = ref(true);
-
 const route = useRoute()
 
 const hideFloodPanelPages = ['Device List', 'User List', 'Device Detail']

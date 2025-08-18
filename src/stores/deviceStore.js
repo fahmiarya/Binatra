@@ -10,7 +10,6 @@ export const useDeviceStore = defineStore('device', () => {
   const error = ref(null)
   const loadArr = ref([])
   const sensorLogs = ref([])
-  const currentReading = ref(null)
   const pagination = ref({
     page: 1,
     limit : 0,
@@ -42,7 +41,7 @@ export const useDeviceStore = defineStore('device', () => {
           sortOrder : sortOrder === 1 ? 'asc' : 'desc'
         }
       });
-      console.log("response : ", response)
+
       devices.value = response.data.data
       pagination.value.page = response.data.page
       pagination.value.limit = response.data.limit
@@ -53,6 +52,30 @@ export const useDeviceStore = defineStore('device', () => {
       console.log(error)
     }finally{
       loadArr.value.splice(loadArr.value.indexOf('GET_ALL_DEVICES'), 1);
+    }
+  }
+
+  const getDataByScroll = async (search = '', page = 1, limit = 10) => {
+    try {
+      loadArr.value.push('GET_DEVICES_SCROLL');
+
+      const { data } = await axios.get('/api/v1/devices', {
+        params : {
+          search,
+          limit,
+          page,
+        }
+      });
+
+      if (page === 1) {
+        devices.value = data.data;
+      } else {
+        devices.value = [...devices.value, ...data.data];
+      }
+    } catch (err) {
+      console.log(err.message);
+    } finally {
+      loadArr.value.splice(loadArr.value.indexOf('GET_DEVICES_SCROLL'), 1);
     }
   }
 
@@ -74,31 +97,18 @@ export const useDeviceStore = defineStore('device', () => {
     }
   };
 
-  const fetchSensorLogHistory = async (deviceCode, startDate, endDate) => {
+  const fetchSensorLogHistory = async (deviceCode, dateRange) => {
     isLoading.value = true
     error.value = null
 
     try {
       const params = new URLSearchParams()
-      if (startDate) params.append('startDate', startDate)
-      if (endDate) params.append('endDate', endDate)
+      if (dateRange[0]) params.append('startDate', dateRange[0])
+      if (dateRange[1]) params.append('endDate', dateRange[1])
 
       const {data} = await axios.get(`/api/v1/sensorLogs/history/${deviceCode}?${params.toString()}`)
 
-      if (data) {
-        // Pastikan assign dengan ref.value untuk reactivity
-        sensorLogs.value = data.data
-
-        // Set current reading to latest data
-        if (data.data.length > 0) {
-          currentReading.value = {
-            deviceCode: deviceCode,
-            waterLevel: data.data[0].waterLevel,
-            rainfall: data.data[0].rainfall,
-            timestamp: data.data[0].timestamp // Gunakan timestamp asli dari database
-          }
-        }
-      }
+      sensorLogs.value = data.data
     } catch (err) {
       error.value = err.message
       console.error('Error fetching sensor history:', err.message)
@@ -189,6 +199,28 @@ export const useDeviceStore = defineStore('device', () => {
     }
   }
 
+  const exportCSV = async (deviceCode) => {
+    try {
+      const response = await axios.get(`/api/v1/sensorLogs/${deviceCode}/export`, {
+        responseType: 'blob', // Penting untuk file
+      });
+
+      // Buat URL dari blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `sensorLog_${deviceCode}.csv`); // nama file
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // bersihkan memory
+
+    } catch (error) {
+      console.error("Failed to export CSV:", error);
+    }
+  };
+
+
   return {
     devices,
     isLoading,
@@ -198,6 +230,7 @@ export const useDeviceStore = defineStore('device', () => {
     pagination,
     getConnectedDevices,
     getAllDevices,
+    getDataByScroll,
     getDevice,
     getChartData,
     fetchDevices,
@@ -205,5 +238,6 @@ export const useDeviceStore = defineStore('device', () => {
     updateDevice,
     addRealTimeData,
     deleteDevice,
+    exportCSV,
   }
 })

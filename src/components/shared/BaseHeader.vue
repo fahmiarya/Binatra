@@ -159,7 +159,7 @@ const handleLogout = async () => {
           <img src="../../assets/images/user.png" alt="User Avatar" />
         </div>
 
-        <button
+        <!-- <button
           class="ml-4 cursor-pointer transition-colors hover:text-red-600"
           :class="{ 'opacity-50 cursor-not-allowed': isLoggingOut }"
           :disabled="isLoggingOut"
@@ -167,7 +167,7 @@ const handleLogout = async () => {
         >
           <i v-if="isLoggingOut" class="fa-solid fa-spinner fa-spin"></i>
           <i v-else class="fa-solid fa-arrow-right-from-bracket"></i>
-        </button>
+        </button> -->
       </div>
     </div>
   </header>
