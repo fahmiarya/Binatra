@@ -66,7 +66,7 @@ onMounted(async () => {
 
 <template>
   <AuthenticatedLayout>
-    <BaseCard title="Daftar Device" class="w-full h-fit">
+    <BaseCard title="Daftar Alat" class="w-full h-fit">
       <BaseTable
       paginator
       lazy
@@ -88,14 +88,14 @@ onMounted(async () => {
             </div>
 
             <div class="relative">
-              <InputText v-model="searchInput" @input="handleSearch($event)" placeholder="Cari Device" />
+              <InputText v-model="searchInput" @input="handleSearch($event)" placeholder="Cari Alat" />
             </div>
           </div>
         </template>
         <template #empty>
           <div class="p-4 text-center font-medium">Device Tidak Ditemukan.</div>
         </template>
-        <Column field="code" sortable header="Device Code"></Column>
+        <Column field="code" sortable header="Kode Alat"></Column>
         <Column field="status" header="Status">
           <template #body="{ data }">
             <Tag :value="capitalizeFirstLetter(data.status.toLowerCase())" :severity="getSeverity(data.status)" />

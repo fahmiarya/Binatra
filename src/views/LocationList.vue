@@ -110,13 +110,13 @@ onMounted(async () => {
         </div>
       </template>
       <template #empty>
-        <div class="p-4 text-center font-medium">Device Tidak Ditemukan.</div>
+        <div class="p-4 text-center font-medium">Lokasi Tidak Ditemukan.</div>
       </template>
       <Column field="id" sortable header="id"></Column>
       <Column field="name" header="Nama Lokasi"></Column>
-      <Column field="device" header="Device">
+      <Column field="device" header="Alat">
         <template #body="{ data }">
-          {{ data.device?.name || 'Belum ada device' }}
+          {{ data.device?.name || 'Belum ada alat' }}
         </template>
       </Column>
       <Column field="currentStatus" header="Status">

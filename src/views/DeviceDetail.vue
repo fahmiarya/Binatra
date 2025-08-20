@@ -81,10 +81,10 @@ const handleSubmit = debounce(async () => {
       form.periode,
     )
     if(res){
-      showSuccessToast("Berhasil Update Device")
+      showSuccessToast("Berhasil Update Alat")
     }
   } catch (error) {
-    showErrorToast('Gagal Update Device')
+    showErrorToast('Gagal Update Alat')
   }finally{
     isLoading.value = false
   }
@@ -368,7 +368,7 @@ onMounted(async () => {
 <template>
   <AuthenticatedLayout>
     <BaseCard
-    title="Detail Device"
+    title="Detail Alat"
     class="w-full h-fit">
       <div v-if="device" class="space-y-8">
         <Fluid>
@@ -385,7 +385,7 @@ onMounted(async () => {
               <template #header>
                 <div class="w-full flex items-center justify-between">
                   <section class="flex items-center gap-x-5">
-                    <h3 class="text-xl font-semibold">Informasi Device</h3>
+                    <h3 class="text-xl font-semibold">Informasi Alat</h3>
                     <span
                       v-if="statusBadge"
                       :class="[
@@ -402,7 +402,7 @@ onMounted(async () => {
               <!-- Basic Information -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Kode Device</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Kode Alat</label>
                   <InputText
                     v-model="form.code"
                     readonly
@@ -411,7 +411,7 @@ onMounted(async () => {
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Nama Device</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Nama Alat</label>
                   <InputText
                     v-model="form.name"
                     placeholder="Enter device name"
@@ -440,7 +440,7 @@ onMounted(async () => {
             </BasePanel>
 
             <!-- Configuration -->
-            <BasePanel header="Konfigurasi Device">
+            <BasePanel header="Konfigurasi Alat">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2"

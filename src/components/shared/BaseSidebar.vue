@@ -66,7 +66,7 @@ const navItems = [
     icon: 'mdi:report-areaspline',
   },
   {
-    label: 'Perangkat',
+    label: 'Alat',
     route: '/device',
     icon: 'mdi:water-boiler',
   },

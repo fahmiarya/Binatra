@@ -35,13 +35,13 @@
       <!-- Jumlah Device Terhubung -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
         <!-- Device Card -->
-        <BaseCard title="Jumlah Device Terhubung">
+        <BaseCard title="Jumlah Alat Terhubung">
           <div class="flex items-center min-h-[100px] md:min-h-[120px]">
             <div class="flex flex-col">
               <p class="text-base md:text-lg text-[#274C77] font-bold">
                 {{ deviceConnected || 0 }}
                 <span class="text-gray-500 font-normal ml-2">
-                  Connected devices
+                  Alat Terhubung
                 </span>
               </p>
             </div>
