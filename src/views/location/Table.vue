@@ -12,14 +12,12 @@ import BaseSelect from '@/components/ui/BaseSelect.vue';
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { debounce } from 'lodash';
 import { useLocationStore } from '@/stores/locationStore';
-import { useRouter } from 'vue-router';
 
 const store = useLocationStore()
 const { locations, pagination, loadArr } = storeToRefs(store)
 const searchInput = ref('')
-const router = useRouter()
 
-const emits = defineEmits(['add'])
+const emits = defineEmits(['add', 'edit'])
 
 const rowsPerPage = ref([
   { name: '10', value: 10 },
@@ -124,18 +122,13 @@ onMounted(async () => {
             <Tag :value="capitalizeFirstLetter(data.currentStatus.toLowerCase())" :severity="getSeverity(data.currentStatus)" />
           </template>
         </Column>
-      <!-- <Column field="updatedAt" header="Update Terakhir">
-        <template #body="{ data }">
-          {{ formatDate(data.updatedAt) }}
-        </template>
-      </Column> -->
       <Column field="actions" header="Actions">
         <template #body="{ data }">
           <div class="flex items-center gap-2">
             <Icon icon="mdi:trash-outline" class="text-3xl text-red-500 hover:text-red-600 cursor-pointer"
               @click="store.deleteLocation(data.id)" />
             <Icon icon="mdi:edit-outline" class="text-3xl text-yellow-500 hover:text-yellow-600 cursor-pointer"
-              @click="router.push(`/device/${data.id}`)" />
+              @click="emits('edit', data)" />
           </div>
         </template>
       </Column>

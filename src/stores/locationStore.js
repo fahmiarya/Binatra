@@ -323,6 +323,7 @@ export const useLocationStore = defineStore('locations', () => {
       }
       return { address: '', district: '', city: '', province: '' }
     } catch (error) {
+      console.log(error)
       return { address: '', district: '', city: '', province: '' }
     }
   }

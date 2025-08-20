@@ -19,12 +19,10 @@ import 'vue3-toastify/dist/index.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-import { storeToRefs } from 'pinia'
 import { debounce } from 'lodash'
 
 const route = useRoute()
 const store = useDeviceStore()
-const {loadArr} = storeToRefs(store)
 const device = ref(null)
 const location = useLocationStore()
 const isLoading = ref(false)
@@ -84,6 +82,7 @@ const handleSubmit = debounce(async () => {
       showSuccessToast("Berhasil Update Alat")
     }
   } catch (error) {
+    console.log(error)
     showErrorToast('Gagal Update Alat')
   }finally{
     isLoading.value = false
@@ -94,14 +93,12 @@ const map = ref(null)
 const mapElement = ref(null)
 const mapCenter = ref([])
 
-// Configure Leaflet default icons
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
 })
 
-// Icon definitions
 const normalIcon = L.icon({
   iconUrl: markerIcon,
   iconRetinaUrl: markerIcon2x,
@@ -375,7 +372,7 @@ onMounted(async () => {
           <form @submit.prevent="handleSubmit" class="space-y-6">
             <section class="w-56 justify-end flex gap-x-5 ml-auto">
 
-              <RouterLink to="/devices">
+              <RouterLink to="/device">
                 <BaseButton label="Kembali" />
               </RouterLink>
               <BaseButton label="Simpan" :loading="isLoading"/>

@@ -48,7 +48,6 @@ async function handleLocationClick(lat, lon, locationName) {
   }
 }
 
-// array nav items - SESUAIKAN dengan router yang sebenarnya
 const navItems = [
   {
     label: 'Dashboard',
@@ -57,12 +56,12 @@ const navItems = [
   },
   {
     label: 'Lokasi',
-    route: '/pemerintah-kota',
+    route: '/lokasi',
     icon: 'mdi:location-radius',
   },
   {
     label: 'Laporan',
-    route: '/dinas-pekerjaan-umum',
+    route: '/report',
     icon: 'mdi:report-areaspline',
   },
   {

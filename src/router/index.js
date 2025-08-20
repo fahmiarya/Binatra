@@ -7,31 +7,31 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue'),
+      component: () => import('@/views/Dashboard.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/sign-in',
       name: 'signin',
-      component: () => import('@/views/SignIn.vue'),
+      component: () => import('@/views/auth/SignIn.vue'),
       meta: { requiresAuth: false, guestOnly: true },
     },
     {
       path: '/sign-up',
       name: 'signup',
-      component: () => import('@/views/SignUp.vue'),
+      component: () => import('@/views/auth/SignUp.vue'),
       meta: { requiresAuth: false, guestOnly: true },
     },
     {
-      path: '/pemerintah-kota',
-      name: 'pemerintah-kota',
-      component: () => import('@/views/PemerintahKota.vue'),
+      path: '/lokasi',
+      name: 'lokasi',
+      component: () => import('@/views/location/Index.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/dinas-pekerjaan-umum',
-      name: 'dinas-pu',
-      component: () => import('@/views/DinasPekerjaanUmum.vue'),
+      path: '/report',
+      name: 'report',
+      component: () => import('@/views/report/Index.vue'),
       meta: { requiresAuth: true },
     },
     // {
@@ -43,13 +43,13 @@ const router = createRouter({
     {
       path: '/device',
       name: 'Device List',
-      component: () => import('@/views/DeviceList.vue'),
+      component: () => import('@/views/device/Index.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/device/:id',
       name: 'Device Detail',
-      component: () => import('@/views/DeviceDetail.vue'),
+      component: () => import('@/views/device/Show.vue'),
       meta: { requiresAuth: true },
     },
     {
