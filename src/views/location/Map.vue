@@ -14,7 +14,7 @@ import { toast } from 'vue3-toastify'
 
 const locationsStore = useLocationStore()
 
-const emits = defineEmits(['mapClick'])
+const emits = defineEmits(['mapClick', 'edit'])
 const props = defineProps(['newMarker', 'search', 'center'])
 
 const {newMarker, search, center} = toRefs(props)
@@ -275,7 +275,7 @@ defineExpose({
             </div>
 
             <div class="flex gap-2 mt-2">
-              <button @click="editLocation(loc)"
+              <button @click="emits('edit', loc)"
                 class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
                 Edit
               </button>

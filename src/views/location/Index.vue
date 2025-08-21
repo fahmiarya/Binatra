@@ -148,7 +148,11 @@ const pickSearchedLocation = (item) => {
 
 const editLocation = (loc) => {
   formVisible.value = true
+  isEditing.value = true
   form.value = { ...loc }
+  nextTick(() => {
+    mapForm.value.handleFocus()
+  })
   newMarker.value = [loc.latitude, loc.longitude]
 }
 
@@ -404,6 +408,7 @@ onMounted(async () => {
         :newMarker="newMarker"
         :search="searchKeyword"
         :center="center"
+        @edit="editLocation"
         @mapClick="handleMapClick"
       />
 
