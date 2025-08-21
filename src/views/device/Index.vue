@@ -12,13 +12,14 @@ import { useRouter } from 'vue-router';
 import BaseTable from '@/components/ui/BaseTable.vue';
 import InputText from '@/components/ui/InputText.vue';
 import BaseSelect from '@/components/ui/BaseSelect.vue';
+import { useConfirm } from "primevue/useconfirm";
 import { debounce } from 'lodash';
+import { toast } from 'vue3-toastify'
 
 const store = useDeviceStore()
 const { devices, pagination, loadArr } = storeToRefs(store)
 const router = useRouter()
-
-
+const confirm = useConfirm();
 const searchInput = ref('')
 const selectedStatus = ref({ name: 'Semua Status', status: '' },
 )
@@ -47,6 +48,25 @@ const getSeverity = (status) => {
     default:
       return null;
   }
+};
+
+const confirmDelete = (id) => {
+    confirm.require({
+        message: 'Apakah Anda yakin ingin menghapus data ini?',
+        header: 'Konfirmasi Hapus',
+        rejectProps: {
+            label: 'Batal',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Hapus'
+        },
+        accept: async () => {
+            await store.deleteDevice(id)
+            toast.success('Device berhasil dihapus', { autoClose: 2000, position: 'top-right' })
+        }
+    });
 };
 
 const handleSearch = debounce(async (event) => {
@@ -115,7 +135,7 @@ onMounted(async () => {
           <template #body="{ data }">
             <div class="flex items-center gap-2">
               <Icon icon="mdi:trash-outline" class="text-3xl text-red-500 hover:text-red-600 cursor-pointer"
-                @click="store.deleteDevice(data.id)" />
+                @click="confirmDelete(data.id)" />
               <Icon icon="mdi:edit-outline" class="text-3xl text-yellow-500 hover:text-yellow-600 cursor-pointer"
                 @click="router.push(`/device/${data.id}`)" />
             </div>

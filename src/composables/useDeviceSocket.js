@@ -1,9 +1,14 @@
 // composables/useDeviceSocket.js
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useSocket } from './useSocket.js';
+import { useDeviceStore } from '@/stores/deviceStore.js';
+import { storeToRefs } from 'pinia';
 
 export function useDeviceSocket() {
   const socket = useSocket();
+  const deviceStore = useDeviceStore()
+
+  const {devices} = storeToRefs(deviceStore)
 
   // Reactive state
   const sensorData = ref({});
@@ -20,8 +25,6 @@ export function useDeviceSocket() {
   const initializeDeviceListeners = () => {
     // General sensor data handler
     const sensorDataCleanup = socket.on('sensor-data', (data) => {
-      console.log('📊 Sensor data received:', data);
-
       sensorData.value = data;
 
       // Add to recent updates
@@ -38,20 +41,20 @@ export function useDeviceSocket() {
     });
 
     // Device-specific sensor data handler
-    const deviceSensorCleanup = socket.on('sensor-data-*', (data) => {
-      console.log(`📊 Device-specific sensor data:`, data);
-      // Handle device-specific data if needed
-    });
+    // const deviceSensorCleanup = socket.on('sensor-data-*', (data) => {
+    //   console.log(`📊 Device-specific sensor data:`, data);
+    //   // Handle device-specific data if needed
+    // });
 
     // Sensor data saved confirmation
-    const sensorSavedCleanup = socket.on('sensor-data-saved', (data) => {
-      console.log('💾 Sensor data saved to database:', data);
-    });
+    // const sensorSavedCleanup = socket.on('sensor-data-saved', (data) => {
+    //   console.log('💾 Sensor data saved to database:', data);
+    // });
 
     // Sensor data error handler
-    const sensorErrorCleanup = socket.on('sensor-data-error', (data) => {
-      console.error('❌ Sensor data error:', data);
-    });
+    // const sensorErrorCleanup = socket.on('sensor-data-error', (data) => {
+    //   console.error('❌ Sensor data error:', data);
+    // });
 
     // Device heartbeat handler
     const heartbeatCleanup = socket.on('device_heartbeat', (data) => {
@@ -66,26 +69,44 @@ export function useDeviceSocket() {
     });
 
     // Device heartbeat error handler
-    const heartbeatErrorCleanup = socket.on('device_heartbeat_error', (data) => {
-      console.error('❌ Device heartbeat error:', data);
-    });
+    // const heartbeatErrorCleanup = socket.on('device_heartbeat_error', (data) => {
+    //   console.error('❌ Device heartbeat error:', data);
+    // });
 
     // Device status summary handler
     const statusSummaryCleanup = socket.on('device_status_summary', (data) => {
-      console.log('📈 Device status summary:', data);
-
       connectedDevices.value = data.connected;
     });
 
-    // Device check result handler
-    const deviceCheckCleanup = socket.on('device-check-result', (data) => {
-      if(data.device.status === 'CONNECTED') connectedDevices.value += 1
-    });
+    // Handling ketika terdapat device yang checking
+    // const deviceCheckCleanup = socket.on('device-check-result', (data) => {
+    //   if (data.device.status === 'CONNECTED') {
+    //     const index = devices.value.findIndex(d => d.id === data.device.id)
+
+    //     if (index !== -1) {
+    //       devices.value[index] = data.device
+    //     } else {
+    //       devices.value.push(data.device)
+    //     }
+    //   }
+    // })
+
+    const deviceCheckCleanup = socket.on('device_status_changed', (data) => {
+      const index = devices.value.findIndex(d => d.id === data.device.id)
+
+      if (index !== -1) {
+        devices.value[index] = data.device
+      } else {
+        devices.value.push(data.device)
+      }
+    })
+
+
 
     // Device check error handler
-    const deviceCheckErrorCleanup = socket.on('device-check-error', (data) => {
-      console.error('❌ Device check error:', data);
-    });
+    // const deviceCheckErrorCleanup = socket.on('device-check-error', (data) => {
+    //   console.error('❌ Device check error:', data);
+    // });
 
     // NEW: Device notification handlers
     const deviceNotificationCleanup = socket.on('new-notification', (notification) => {
@@ -107,31 +128,28 @@ export function useDeviceSocket() {
     });
 
     // NEW: Device setting response handlers
-    const deviceSettingSuccessCleanup = socket.on('device-setting-success', (data) => {
-      console.log('✅ Device setting updated successfully:', data);
-      // You can add additional logic here like showing success notification
-    });
+    // const deviceSettingSuccessCleanup = socket.on('device-setting-success', (data) => {
+    //   console.log('✅ Device setting updated successfully:', data);
+    //   // You can add additional logic here like showing success notification
+    // });
 
-    const deviceSettingErrorCleanup = socket.on('device-setting-error', (error) => {
-      console.error('❌ Device setting update failed:', error);
-      // You can add additional logic here like showing error notification
-    });
+    // const deviceSettingErrorCleanup = socket.on('device-setting-error', (error) => {
+    //   console.error('❌ Device setting update failed:', error);
+    //   // You can add additional logic here like showing error notification
+    // });
 
     // Store cleanup functions
     cleanupFunctions.push(
       sensorDataCleanup,
-      deviceSensorCleanup,
-      sensorSavedCleanup,
-      sensorErrorCleanup,
+      // sensorErrorCleanup,
       heartbeatCleanup,
-      heartbeatErrorCleanup,
       statusSummaryCleanup,
       deviceCheckCleanup,
-      deviceCheckErrorCleanup,
+      // deviceCheckErrorCleanup,
       deviceNotificationCleanup,
       specificDeviceNotificationCleanup,
-      deviceSettingSuccessCleanup,
-      deviceSettingErrorCleanup
+      // deviceSettingSuccessCleanup,
+      // deviceSettingErrorCleanup
     );
   };
 

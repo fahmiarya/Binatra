@@ -385,7 +385,7 @@ onUnmounted(() => {
         </template>
       </AutoComplete>
 
-      <BaseButton label="Export" @click="deviceStore.exportCSV(selectedDevice.code)" />
+      <BaseButton label="Export" @click="deviceStore.exportCSV(selectedDevice.code, dateRange)" />
     </section>
 
 

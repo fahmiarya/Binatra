@@ -12,12 +12,16 @@ import BaseSelect from '@/components/ui/BaseSelect.vue';
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { debounce } from 'lodash';
 import { useLocationStore } from '@/stores/locationStore';
+import { useConfirm } from "primevue/useconfirm";
+import { toast } from 'vue3-toastify'
 
 const store = useLocationStore()
 const { locations, pagination, loadArr } = storeToRefs(store)
 const searchInput = ref('')
 
 const emits = defineEmits(['add', 'edit'])
+const confirm = useConfirm();
+
 
 const rowsPerPage = ref([
   { name: '10', value: 10 },
@@ -50,6 +54,25 @@ const getSeverity = (status) => {
     default:
       return 'info';
   }
+};
+
+const confirmDelete = (id) => {
+    confirm.require({
+        message: 'Apakah Anda yakin ingin menghapus data ini?',
+        header: 'Konfirmasi Hapus',
+        rejectProps: {
+            label: 'Batal',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Hapus'
+        },
+        accept: async () => {
+            await store.deleteLocation(id)
+            toast.success('Lokasi berhasil dihapus', { autoClose: 2000, position: 'top-right' })
+        }
+    });
 };
 
 
@@ -126,7 +149,7 @@ onMounted(async () => {
         <template #body="{ data }">
           <div class="flex items-center gap-2">
             <Icon icon="mdi:trash-outline" class="text-3xl text-red-500 hover:text-red-600 cursor-pointer"
-              @click="store.deleteLocation(data.id)" />
+              @click="confirmDelete(data.id)" />
             <Icon icon="mdi:edit-outline" class="text-3xl text-yellow-500 hover:text-yellow-600 cursor-pointer"
               @click="emits('edit', data)" />
           </div>

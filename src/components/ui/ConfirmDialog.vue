@@ -27,23 +27,22 @@
     </ConfirmDialog>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import ExclamationTriangeIcon from '@primevue/icons/exclamationtriangle';
 import TimesIcon from '@primevue/icons/times';
-import ConfirmDialog, { type ConfirmDialogPassThroughOptions, type ConfirmDialogProps } from 'primevue/confirmdialog';
+import ConfirmDialog from 'primevue/confirmdialog';
 import { ref } from 'vue';
-import Button from './Button.vue';
+import Button from './BaseButton.vue';
 import SecondaryButton from './SecondaryButton.vue';
-import { ptViewMerge } from './utils';
+import { ptViewMerge } from '@/lib/utils';
 
-interface Props extends /* @vue-ignore */ ConfirmDialogProps {}
-defineProps<Props>();
+defineProps({});
 
-const theme = ref<ConfirmDialogPassThroughOptions>({
+const theme = ref({
     root: `max-h-[90%] max-w-screen rounded-xl
-        border border-surface-200 dark:border-surface-700
-        bg-surface-0 dark:bg-surface-900
-        text-surface-700 dark:text-surface-0 shadow-lg`,
+        border border-surface-200
+        bg-surface-0
+        text-surface-700 shadow-lg`,
     mask: `bg-black/50 fixed top-0 start-0 w-full h-full`,
     transition: {
         enterFromClass: 'opacity-0 scale-75',

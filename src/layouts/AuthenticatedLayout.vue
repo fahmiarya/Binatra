@@ -27,6 +27,8 @@
         />
       </div>
     </div>
+
+    <ConfirmDialog />
   </div>
 </template>
 
@@ -35,6 +37,7 @@
 import BaseHeader from '@/components/shared/BaseHeader.vue';
 import BaseSidebar from '@/components/shared/BaseSidebar.vue';
 import FloodMonitoringPanel from '@/components/shared/FloodMonitoringPanel.vue';
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 import { computed } from 'vue';
 import { useRoute } from 'vue-router'
 

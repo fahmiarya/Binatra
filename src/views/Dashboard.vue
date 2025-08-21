@@ -39,7 +39,7 @@
           <div class="flex items-center min-h-[100px] md:min-h-[120px]">
             <div class="flex flex-col">
               <p class="text-base md:text-lg text-[#274C77] font-bold">
-                {{ deviceConnected || 0 }}
+                {{ connectedDevices || 0 }}
                 <span class="text-gray-500 font-normal ml-2">
                   Alat Terhubung
                 </span>
@@ -87,6 +87,7 @@ const weatherStore = useWeatherStore();
 const deviceStore = useDeviceStore();
 const locationStore = useLocationStore();
 const { weather, main } = storeToRefs(weatherStore);
+const { connectedDevices } = storeToRefs(deviceStore)
 
 // Initialize composables
 const floodSocket = useFloodSocket();
@@ -100,7 +101,6 @@ const sensorData = reactive({
 const totalFloodLocations = ref(0);
 const floodLocations = ref([]);
 const locationsTotal = ref(0);
-const deviceConnected = ref(0);
 
 // Real-time indicators
 const isFloodDataUpdating = ref(false);
@@ -143,10 +143,10 @@ watch(updateTotalFloodLocations, (newValue) => {
   showFloodDataUpdate();
 }, { immediate: true });
 
-watch(deviceSocket.connectedDevices, (newValue) => {
-  deviceConnected.value = newValue;
-  showDeviceDataUpdate();
-}, { immediate: true });
+// watch(deviceSocket.connectedDevices, (newValue) => {
+//   deviceConnected.value = newValue;
+//   showDeviceDataUpdate();
+// }, { immediate: true });
 
 watch(() => floodSocket.floodLocations.value, (newLocations) => {
   floodLocations.value = newLocations || [];
@@ -187,11 +187,6 @@ const loadInitialData = async () => {
       floodLocations.value = floodLocationList;
     }
 
-    if (!deviceSocket.connectedDevices.value?.length) {
-      const connectedDevices = await deviceStore.getConnectedDevices();
-      deviceConnected.value = connectedDevices;
-    }
-
     const [totalLocations, floodLocationCount] = await Promise.all([
       locationStore.getTotalLocations(),
       locationStore.getTotalFloodLocations()
@@ -209,10 +204,10 @@ const loadInitialData = async () => {
 
 // Lifecycle
 onMounted(async () => {
-  // Load initial data as fallback
   await loadInitialData();
 
-  // Setup sensor data listener (existing)
+  // await deviceStore.getConnectedDevices();
+
   listenToSensorData((data) => {
     sensorData.waterlevel = data.waterlevel;
     sensorData.rain = data.rain;
