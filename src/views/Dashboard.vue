@@ -72,7 +72,6 @@ import BaseCard from '@/components/ui/BaseCard.vue';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import CloudIcon from '@/assets/images/cloud.png';
 import { reactive, onMounted, ref, computed, watch } from "vue";
-import { listenToSensorData } from "@/plugins/socket.js";
 import { useWeatherStore } from '@/stores/weather.store';
 import { storeToRefs } from 'pinia';
 import BaseAreaChart from '@/components/ui/BaseAreaChart.vue';
@@ -205,14 +204,6 @@ const loadInitialData = async () => {
 // Lifecycle
 onMounted(async () => {
   await loadInitialData();
-
-  // await deviceStore.getConnectedDevices();
-
-  listenToSensorData((data) => {
-    sensorData.waterlevel = data.waterlevel;
-    sensorData.rain = data.rain;
-    sensorData.buzzerState = data.buzzerState;
-  });
 });
 </script>
 
