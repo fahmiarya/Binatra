@@ -160,11 +160,10 @@ const handleFetchHistory = async () => {
     // Update currentReading dari store setelah fetch berhasil
     const logs = deviceStore.sensorLogs;
 
-    console.log("sensor logs : ", deviceStore.sensorLogs)
 
     if (logs && logs.length > 0) {
       currentReading.value = {
-        waterLevel: logs[0].waterLevel,
+        waterLevel: logs[0].depth,
         rainfall: logs[0].rainfall,
         timestamp: logs[0].timestamp,
         deviceCode: selectedDevice.value.code
@@ -219,6 +218,7 @@ const setupSocket = () => {
 
   // Listen untuk sensor data dari device yang dipilih
   socket.on('sensor-data', (data) => {
+    console.log("data : ", data)
     updateChartRealTime(data);
   });
 
@@ -234,18 +234,18 @@ const updateChartRealTime = (data) => {
     return;
   }
 
-  const waterLevel = data.waterlevel || data.waterLevel || 0;
+  const depth = data.depth || 0;
   const rainfall = data.rainfall || 0;
 
   currentReading.value = {
-    waterLevel: waterLevel,
+    waterLevel: depth,
     rainfall: rainfall,
     timestamp: data.timestamp,
     deviceCode: data.deviceCode
   };
 
   deviceStore.addRealTimeData({
-    waterLevel: waterLevel,
+    waterLevel: depth,
     rainfall: rainfall,
     timestamp: data.timestamp
   });

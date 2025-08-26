@@ -28,14 +28,14 @@ export function useFloodSocket() {
         locationName,
         previousStatus,
         newStatus,
-        waterLevel,
+        depth,
         rainfall,
         timestamp
       } = data;
 
       handleLocationStatusChange(locationId, {
         currentStatus: newStatus,
-        currentWaterLevel: waterLevel,
+        currentWaterLevel: depth,
         currentRainfall: rainfall,
         lastUpdate: timestamp
       });
