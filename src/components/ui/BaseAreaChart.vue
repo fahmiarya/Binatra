@@ -128,23 +128,6 @@ const selectedDate = debounce(() => {
   handleFetchHistory()
 }, 500)
 
-// Helper function untuk format timestamp dengan timezone Indonesia
-const formatTime = (timestamp) => {
-  if (!timestamp) return 'N/A';
-
-  try {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('id-ID', {
-      timeZone: 'Asia/Jakarta',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  } catch (err) {
-    return 'N/A';
-  }
-};
-
 const handleFetchHistory = async () => {
   if (!selectedDevice.value || !selectedDevice.value.code) {
     currentReading.value = null;
@@ -163,15 +146,14 @@ const handleFetchHistory = async () => {
 
     if (logs && logs.length > 0) {
       currentReading.value = {
-        waterLevel: logs[0].depth,
+        depth: logs[0].depth,
         rainfall: logs[0].rainfall,
         timestamp: logs[0].timestamp,
         deviceCode: selectedDevice.value.code
       };
     } else {
-      // Jika tidak ada data, clear current reading
       currentReading.value = {
-        waterLevel: 0,
+        depth: 0,
         rainfall: 0,
         timestamp: null,
         deviceCode: selectedDevice.value.code
@@ -187,8 +169,6 @@ const handleFetchHistory = async () => {
 
 const search = debounce(async (event) => {
   const { query } = event
-
-  console.log(event)
 
   lazyParams.value.query = query;
   lazyParams.value.first = 0;
@@ -218,7 +198,6 @@ const setupSocket = () => {
 
   // Listen untuk sensor data dari device yang dipilih
   socket.on('sensor-data', (data) => {
-    console.log("data : ", data)
     updateChartRealTime(data);
   });
 
@@ -238,14 +217,14 @@ const updateChartRealTime = (data) => {
   const rainfall = data.rainfall || 0;
 
   currentReading.value = {
-    waterLevel: depth,
+    depth: depth,
     rainfall: rainfall,
     timestamp: data.timestamp,
     deviceCode: data.deviceCode
   };
 
   deviceStore.addRealTimeData({
-    waterLevel: depth,
+    depth: depth,
     rainfall: rainfall,
     timestamp: data.timestamp
   });
@@ -287,6 +266,8 @@ watch(deviceSocket.deviceNotificationData, (newData) => {
     }
   }
 }, { immediate: true });
+
+
 
 
 onMounted(async () => {
@@ -338,7 +319,7 @@ onUnmounted(() => {
       style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; margin-top: 20px;">
       <BaseCard title="Tinggi Air">
         <div class="py-5">
-          <p class="text-3xl font-bold text-primary-600">{{ currentReading?.waterLevel || 0 }} cm</p>
+          <p class="text-3xl font-bold text-primary-600">{{ currentReading?.depth || 0 }} cm</p>
         </div>
       </BaseCard>
 

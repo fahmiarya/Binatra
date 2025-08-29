@@ -138,12 +138,12 @@ export const useDeviceStore = defineStore('device', () => {
     const logs = sensorLogs.value || []
 
     const waterData = logs.map((log) => ({
-      x: new Date(log.timestamp).getTime(), // Konversi ke milliseconds untuk ApexCharts
+      x: new Date(log.timestamp).getTime(),
       y: log.depth || 0,
     }))
 
     const rainfallData = logs.map((log) => ({
-      x: new Date(log.timestamp).getTime(), // Konversi ke milliseconds untuk ApexCharts
+      x: new Date(log.timestamp).getTime(),
       y: log.rainfall || 0,
     }))
 
@@ -180,9 +180,9 @@ export const useDeviceStore = defineStore('device', () => {
   }
 
   const addRealTimeData = (newData) => {
+
     const newLogEntry = {
       id: `realtime-${Date.now()}`,
-      waterLevel: newData.waterLevel,
       depth: newData.depth,
       rainfall: newData.rainfall,
       timestamp: newData.timestamp,
