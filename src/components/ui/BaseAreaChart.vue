@@ -26,95 +26,216 @@ const lazyParams = ref({
 let socket = null;
 let intervalId = null;
 
+// Function untuk generate dummy prediction data
+// Function untuk generate dummy prediction data (15 menit ke depan, interval 1 menit)
+const generatePredictionData = (lastTimestamp, lastValue) => {
+  const predictions = [];
+  const now = new Date(lastTimestamp);
+
+  // Titik awal sama dengan data terakhir
+  predictions.push({
+    x: now.getTime(),
+    y: parseFloat(lastValue)
+  });
+
+  let currentValue = parseFloat(lastValue);
+
+  const intervalMinutes = 1; // interval 1 menit
+  const totalMinutes = 15;   // prediksi 15 menit ke depan
+
+  for (let i = 1; i <= totalMinutes; i++) {
+    const futureTime = new Date(now.getTime() + i * intervalMinutes * 60 * 1000);
+
+    // variasi kecil & trend acak
+    const variation = (Math.random() - 0.5) * 2; // -1 sampai +1
+    const trendDirection = Math.random() > 0.5 ? 1 : -1;
+    const trendValue = currentValue + (trendDirection * Math.random() * 0.5) + variation;
+
+    // pastikan nilai >= 0 dan dibulatkan 2 desimal
+    currentValue = Math.max(0, Math.round(trendValue * 100) / 100);
+
+    predictions.push({
+      x: futureTime.getTime(),
+      y: currentValue
+    });
+  }
+
+  return predictions;
+};
+
+
 // Chart options dengan timezone yang benar
-const options = ref({
-  chart: {
-    id: 'areachart',
-    type: 'area',
-    animations: {
-      enabled: true,
-      easing: 'linear',
-      dynamicAnimation: {
-        speed: 1000
-      }
-    },
-    toolbar: {
-      show: false,
-    }
-  },
-  xaxis: {
-    type: 'datetime',
-    labels: {
-      format: 'HH:mm:ss',
-      datetimeUTC: false, // Gunakan timezone lokal
-      formatter: function (val, timestamp) {
-        // Format sesuai timezone Indonesia
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          timeZone: 'Asia/Jakarta'
-        });
-      }
-    }
-  },
-  stroke: {
-    curve: 'smooth'
-  },
-  dataLabels: {
-    enabled: false
-  },
-  tooltip: {
-    x: {
-      format: 'dd/MM/yyyy HH:mm:ss',
-      formatter: function (val) {
-        // Format tooltip sesuai timezone Indonesia
-        const date = new Date(val);
-        return date.toLocaleString('id-ID', {
-          timeZone: 'Asia/Jakarta',
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-      }
-    },
-  },
-  yaxis: [{
-    title: {
-      text: 'Water Level (cm)'
-    }
-  }, {
-    opposite: true,
-    title: {
-      text: 'Rainfall (mm)'
-    }
-  }],
-  colors: ['#008FFB', '#00E396'],
-  fill: {
-    type: 'gradient',
-    gradient: {
-      shade: 'light',
-      type: 'vertical',
-      shadeIntensity: 0.25,
-      gradientToColors: ['#87CEEB', '#90EE90'],
-      inverseColors: false,
-      opacityFrom: 0.8,
-      opacityTo: 0.1,
-      stops: [0, 100]
+const options = computed(() => {
+  const chartData = deviceStore.getChartData();
+
+  // Hitung jumlah data prediksi dan buat annotations
+  let forecastCount = 0;
+  let annotations = {};
+
+  if (chartData.waterData && chartData.waterData.length > 0) {
+    const lastData = chartData.waterData[chartData.waterData.length - 1];
+    const predictionData = generatePredictionData(lastData.x, lastData.y);
+    forecastCount = predictionData.length - 1; // -1 karena titik pertama adalah duplikat
+
+    // Buat annotation untuk area prediksi
+    if (predictionData.length > 1) {
+      const predictionStartX = lastData.x;
+      const predictionEndX = predictionData[predictionData.length - 1].x;
+
+      annotations = {
+        xaxis: [{
+          x: predictionStartX,
+          x2: predictionEndX,
+          fillColor: '#00CED1',
+          opacity: 0.1,
+          borderColor: '#00CED1',
+          borderWidth: 1,
+          label: {
+            text: 'Prediksi 15 Menit',
+            style: {
+              color: '#fff',
+              background: '#00CED1',
+              fontSize: '11px',
+              fontWeight: 600,
+              padding: {
+                left: 8,
+                right: 8,
+                top: 4,
+                bottom: 4
+              }
+            },
+            orientation: 'horizontal',
+            position: 'top',
+            offsetY: -5
+          }
+        }]
+      };
     }
   }
+
+  return {
+    chart: {
+      id: 'areachart',
+      type: 'area',
+      animations: {
+        enabled: true,
+        easing: 'linear',
+        dynamicAnimation: {
+          speed: 1000
+        }
+      },
+      toolbar: {
+        show: false,
+      }
+    },
+    annotations: annotations,
+    xaxis: {
+      type: 'datetime',
+      labels: {
+        format: 'HH:mm:ss',
+        datetimeUTC: false,
+        formatter: function (val, timestamp) {
+          const date = new Date(timestamp);
+          return date.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZone: 'Asia/Jakarta'
+          });
+        }
+      }
+    },
+    stroke: {
+      curve: 'smooth',
+      width: [1, 1]
+    },
+    dataLabels: {
+      enabled: false
+    },
+    tooltip: {
+      x: {
+        format: 'dd/MM/yyyy HH:mm:ss',
+        formatter: function (val) {
+          const date = new Date(val);
+          return date.toLocaleString('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+        }
+      },
+    },
+    yaxis: [{
+      title: {
+        text: 'Water Level (cm)'
+      },
+      // min: function(min) {
+      //   return min * 0.95;
+      // },
+      // max: function(max) {
+      //   return max * 1.05;
+      // }
+    }, {
+      opposite: true,
+      title: {
+        text: 'Rainfall (mm)'
+      }
+    }],
+    colors: ['#008FFB', '#00E396'],
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shade: 'light',
+        type: 'vertical',
+        shadeIntensity: 0.25,
+        gradientToColors: ['#87CEEB', '#90EE90'],
+        inverseColors: false,
+        opacityFrom: 0.6,
+        opacityTo: 0.1,
+        stops: [0, 100]
+      }
+    },
+    // legend: {
+    //   show: true,
+    //   position: 'top',
+    //   horizontalAlign: 'right'
+    // },
+    // Konfigurasi Forecast Data Points
+    forecastDataPoints: {
+      count: forecastCount,
+      fillOpacity: 0.4,
+      strokeWidth: 2,
+      dashArray: [8, 10] // Garis putus-putus untuk prediksi
+    }
+  };
 });
 
 const series = computed(() => {
   const chartData = deviceStore.getChartData()
+
+  // Gabungkan water level dan prediksi dalam 1 series
+  let combinedWaterData = [...chartData.waterData];
+
+  if (chartData.waterData && chartData.waterData.length > 0) {
+    const lastData = chartData.waterData[chartData.waterData.length - 1];
+    const predictionData = generatePredictionData(lastData.x, lastData.y);
+
+    // Gabungkan tanpa duplikat titik pertama (karena sudah ada di waterData)
+    combinedWaterData = [...chartData.waterData, ...predictionData.slice(1)];
+
+    // console.log('🔍 Total data points:', combinedWaterData.length);
+    // console.log('🔍 Prediction points count:', predictionData.length - 1);
+  }
+
   return [
     {
       name: 'Water Level',
-      data: chartData.waterData
+      data: combinedWaterData,
+      yAxisIndex: 0
     },
     {
       name: 'Rainfall',
@@ -140,9 +261,7 @@ const handleFetchHistory = async () => {
       dateRange.value
     );
 
-    // Update currentReading dari store setelah fetch berhasil
     const logs = deviceStore.sensorLogs;
-
 
     if (logs && logs.length > 0) {
       currentReading.value = {
@@ -158,11 +277,9 @@ const handleFetchHistory = async () => {
         timestamp: null,
         deviceCode: selectedDevice.value.code
       };
-
     }
   } catch (error) {
     console.error("❌ Error fetching history for device:", selectedDevice.value.code, error);
-    // Clear data on error
     currentReading.value = null;
   }
 }
@@ -180,13 +297,10 @@ const search = debounce(async (event) => {
   }
 }, 500);
 
-// Setup Socket.IO untuk real-time updates
 const setupSocket = () => {
   socket = io(import.meta.env.VITE_API_URL);
 
   socket.on('connect', () => {
-
-    // Subscribe ke device yang sedang dipilih
     if (selectedDevice.value && selectedDevice.value.code) {
       socket.emit('subscribe-device', selectedDevice.value.code);
     }
@@ -196,18 +310,15 @@ const setupSocket = () => {
     console.log('Disconnected from Socket.IO server');
   });
 
-  // Listen untuk sensor data dari device yang dipilih
   socket.on('sensor-data', (data) => {
     updateChartRealTime(data);
   });
 
-  // Listen untuk konfirmasi data tersimpan
   socket.on('sensor-data-saved', (data) => {
     updateChartRealTime(data);
   });
 };
 
-// Update chart secara real-time
 const updateChartRealTime = (data) => {
   if (!selectedDevice.value || data.deviceCode !== selectedDevice.value.code) {
     return;
@@ -230,36 +341,28 @@ const updateChartRealTime = (data) => {
   });
 };
 
-// Watch for device changes
 watch(selectedDevice, async (newDevice, oldDevice) => {
-  // Socket.IO: Unsubscribe dari device lama
   if (socket && oldDevice && oldDevice.code) {
     socket.emit('unsubscribe-device', oldDevice.code);
   }
 
-  // Socket.IO: Subscribe ke device baru
   if (socket && newDevice && newDevice.code) {
     socket.emit('subscribe-device', newDevice.code);
   }
 
-  // Fetch data untuk device baru
   await handleFetchHistory();
 });
 
 watch(deviceSocket.deviceNotificationData, (newData) => {
   if (newData) {
-    // ✅ Cari device yang matching di devices array
     const matchingDevice = devices.value.find(device =>
       device.code === newData.code || device.id === newData.id
     );
 
     if (matchingDevice) {
-      // ✅ Update status device dengan status dari notification
       if (newData.status) {
         matchingDevice.status = newData.status;
       }
-
-      // ✅ Set selectedDevice dengan device yang sudah diupdate
       selectedDevice.value = matchingDevice;
     } else {
       console.warn("Device not found in devices array:", newData);
@@ -267,26 +370,16 @@ watch(deviceSocket.deviceNotificationData, (newData) => {
   }
 }, { immediate: true });
 
-
-
-
 onMounted(async () => {
-
-  // Setup Socket.IO connection untuk real-time
   setupSocket();
 
   try {
-    // 1. Fetch devices terlebih dahulu
     await deviceStore.fetchDevices();
 
-    // 2. Tunggu sampai devices ter-load dan selectedDevice ter-set
     if (devices.value.length > 0) {
-      // Jika devices sudah ada, set selectedDevice jika belum ada
       if (!selectedDevice.value) {
         selectedDevice.value = devices.value[0];
       }
-
-      // 3. Fetch data untuk selected device
       await handleFetchHistory();
     } else {
       console.log("⚠️ No devices found");
@@ -297,14 +390,11 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-
   if (intervalId) {
     clearInterval(intervalId);
   }
 
-  // Cleanup socket connection
   if (socket) {
-    // Unsubscribe dari device saat ini
     if (selectedDevice.value && selectedDevice.value.code) {
       socket.emit('unsubscribe-device', selectedDevice.value.code);
     }
@@ -368,7 +458,6 @@ onUnmounted(() => {
 
       <BaseButton label="Export" @click="deviceStore.exportCSV(selectedDevice.code, dateRange)" />
     </section>
-
 
     <!-- Chart -->
     <apexchart v-if="selectedDevice && devices.length" type="area" height="400" :options="options" :series="series"></apexchart>
