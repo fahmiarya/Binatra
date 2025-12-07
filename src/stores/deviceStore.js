@@ -12,6 +12,7 @@ export const useDeviceStore = defineStore('device', () => {
   const error = ref(null)
   const loadArr = ref([])
   const sensorLogs = ref([])
+  const flaskPrediction = ref([]) // ← TAMBAHAN: State untuk menyimpan prediksi Flask
   const pagination = ref({
     page: 1,
     limit: 0,
@@ -139,17 +140,24 @@ export const useDeviceStore = defineStore('device', () => {
 
     const waterData = logs.map((log) => ({
       x: new Date(log.timestamp).getTime(),
-      y: log.depth || 0,
+      y: Math.round(log.depth || 0), // ← Bulatkan depth
     }))
 
     const rainfallData = logs.map((log) => ({
       x: new Date(log.timestamp).getTime(),
-      y: log.rainfall || 0,
+      y: Math.round(log.rainfall || 0), // ← Bulatkan rainfall
+    }))
+
+    // Bulatkan prediksi Flask juga
+    const roundedFlaskPrediction = flaskPrediction.value.map(item => ({
+      x: item.x,
+      y: Math.round(item.y)
     }))
 
     return {
       waterData: waterData.reverse(), // Reverse untuk urutan kronologis di chart
       rainfallData: rainfallData.reverse(),
+      flaskPrediction: roundedFlaskPrediction // ← Return prediksi Flask yang sudah dibulatkan
     }
   }
 
@@ -198,6 +206,11 @@ export const useDeviceStore = defineStore('device', () => {
     }
 
     sensorLogs.value = updatedLogs
+  }
+
+  // ← TAMBAHAN: Method untuk set prediksi Flask
+  const setFlaskPrediction = (predictions) => {
+    flaskPrediction.value = predictions
   }
 
   const deleteDevice = async (id) => {
@@ -277,6 +290,7 @@ export const useDeviceStore = defineStore('device', () => {
     error,
     loadArr,
     sensorLogs,
+    flaskPrediction, // ← TAMBAHAN: Export state
     pagination,
     getConnectedDevices,
     getAllDevices,
@@ -287,6 +301,7 @@ export const useDeviceStore = defineStore('device', () => {
     fetchSensorLogHistory,
     updateDevice,
     addRealTimeData,
+    setFlaskPrediction, // ← TAMBAHAN: Export method
     deleteDevice,
     exportCSV,
   }
