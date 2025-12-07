@@ -16,7 +16,7 @@
   const currentReading = ref(null);
   const selectedDevice = ref(null);
   const dateRange = ref([new Date()]);
-  const isLoading = ref(false);
+  const isLoading = ref(false); // State untuk loading indicator
   const lazyParams = ref({
     first: 0,
     rows: 10,
@@ -29,7 +29,7 @@
 
   const fetchPredictionFromFlask = async (sensorData) => {
     try {
-      const response = await fetch(`https://model.binatra.id/predict`, {
+      const response = await fetch(`http://localhost:5000/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sensorData)
@@ -51,7 +51,7 @@
         return [];
       }
     } catch (err) {
-      console.log(err)
+      return [];
     }
   };
 
@@ -184,7 +184,7 @@
       },
       stroke: {
         curve: 'smooth',
-        width: [1, 1]
+        width: [2, 2]
       },
       dataLabels: {
         enabled: false
@@ -207,18 +207,18 @@
             });
           }
         },
-        // y: {
-        //   formatter: function (value, { seriesIndex }) {
-        //     if (value === null || value === undefined) return 'N/A';
+        y: {
+          formatter: function (value, { seriesIndex }) {
+            if (value === null || value === undefined) return 'N/A';
 
-        //     if (seriesIndex === 0) {
-        //       return value.toFixed(2) + ' cm';
-        //     } else if (seriesIndex === 1) {
-        //       return value + ' mm';
-        //     }
-        //     return value;
-        //   }
-        // }
+            if (seriesIndex === 0) {
+              return value.toFixed(2) + ' cm';
+            } else if (seriesIndex === 1) {
+              return value + ' mm';
+            }
+            return value;
+          }
+        }
       },
       yaxis: [{
         title: {
@@ -235,9 +235,14 @@
         title: {
           text: 'Rainfall (mm)'
         },
+        min: 0,
+        max: 50,
         labels: {
+          style: {
+            fontSize: '10px'
+          },
           formatter: function(val) {
-            return val !== null && val !== undefined ? val : '0';
+            return val !== null && val !== undefined ? val.toFixed(0) : '0';
           }
         }
       }],
@@ -255,11 +260,11 @@
           stops: [0, 100]
         }
       },
-      // legend: {
-      //   show: true,
-      //   position: 'top',
-      //   horizontalAlign: 'right'
-      // },
+      legend: {
+        show: true,
+        position: 'top',
+        horizontalAlign: 'right'
+      },
       forecastDataPoints: {
         count: forecastCount,
         fillOpacity: 0.4,
