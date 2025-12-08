@@ -5,7 +5,7 @@
     <!-- Header (Full Width) -->
     <BaseHeader />
 
-    <div class="flex flex-1">
+    <div class="flex flex-1 mt-16">
       <!-- Sidebar -->
       <BaseSidebar />
 

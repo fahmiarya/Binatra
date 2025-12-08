@@ -12,7 +12,7 @@ export const useDeviceStore = defineStore('device', () => {
   const error = ref(null)
   const loadArr = ref([])
   const sensorLogs = ref([])
-  const flaskPrediction = ref([]) // ← TAMBAHAN: State untuk menyimpan prediksi Flask
+  const flaskPrediction = ref([])
   const pagination = ref({
     page: 1,
     limit: 0,
@@ -133,19 +133,18 @@ export const useDeviceStore = defineStore('device', () => {
     }
   }
 
-  // Format chart data untuk ApexCharts dengan timestamp yang benar
   const getChartData = () => {
     // Pastikan menggunakan .value untuk reactive
     const logs = sensorLogs.value || []
 
     const waterData = logs.map((log) => ({
       x: new Date(log.timestamp).getTime(),
-      y: Math.round(log.depth || 0), // ← Bulatkan depth
+      y: Math.round(log.depth || 0),
     }))
 
     const rainfallData = logs.map((log) => ({
       x: new Date(log.timestamp).getTime(),
-      y: Math.round(log.rainfall || 0), // ← Bulatkan rainfall
+      y: log.rainfall || 0,
     }))
 
     // Bulatkan prediksi Flask juga

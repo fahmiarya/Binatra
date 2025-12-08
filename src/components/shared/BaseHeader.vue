@@ -98,7 +98,7 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <header class="w-full bg-white shadow p-4 z-10">
+  <header class="w-full bg-white shadow p-4 z-50 fixed">
     <div class="w-full flex justify-between items-center">
       <div class="flex items-center justify-between w-[30%]">
         <img src="../../assets/images/binatra.jpeg" alt="Binatra Logo" class="h-10 mr-3" />

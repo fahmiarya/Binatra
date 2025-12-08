@@ -3,7 +3,8 @@
   <div class="w-1/3 flex flex-col gap-10">
     <!-- Notifications Card -->
     <BaseCard title="Peringatan Banjir" customClass="h-[350px] scrollbar-hidden">
-      <div class="mt-4 space-y-4 overflow-y-auto max-h-64" @scroll="handleNotificationScroll" ref="notificationScrollContainer">
+      <div class="mt-4 space-y-4 overflow-y-auto max-h-64" @scroll="handleNotificationScroll"
+        ref="notificationScrollContainer">
         <div class="flex" v-for="notification in floodNotifications" :key="notification.id">
           <div :class="[
             'w-2 h-2 rounded-full mt-1.5 mr-2',
@@ -26,16 +27,38 @@
         <!-- Error state for notifications -->
         <div v-if="locationStore.historyError" class="text-center py-4 text-red-500 text-xs">
           <p>Error: {{ locationStore.historyError }}</p>
-          <button @click="refreshNotifications" class="mt-2 px-3 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">
+          <button @click="refreshNotifications"
+            class="mt-2 px-3 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200">
             Coba Lagi
           </button>
         </div>
       </div>
     </BaseCard>
 
+    <BaseCard title="Prediksi 15 Menit" :hasArrow="false" customClass="">
+      <Timeline :value="flaskPrediction" class="mt-10">
+        <template #marker="slotProps">
+          <span class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-xs"
+            :style="{ backgroundColor: backgroundCondition(slotProps.item.condition) }">
+            <Icon :icon="iconCondition(slotProps.item.condition)" class="size-6 text-white"/>
+          </span>
+        </template>
+        <template #opposite="slotProps">
+          <small class="text-gray-600">{{ timeFormat(slotProps.item.x) }}</small>
+        </template>
+        <template #content="slotProps">
+          <h3>
+            {{ slotProps.item.condition }}
+          </h3>
+          <small>{{ Math.round(slotProps.item.y) }} cm</small>
+        </template>
+      </Timeline>
+    </BaseCard>
+
     <!-- Alert Locations Card -->
     <BaseCard title="Lokasi Dengan Status Waspada" :hasArrow="false" customClass="flex-grow">
-      <div class="space-y-3 mt-4 scrollbar-hidden overflow-y-auto max-h-screen" @scroll="handleLocationScroll" ref="locationScrollContainer">
+      <div class="space-y-3 mt-4 scrollbar-hidden overflow-y-auto max-h-screen" @scroll="handleLocationScroll"
+        ref="locationScrollContainer">
 
         <!-- Location cards -->
         <div v-for="location in floodLocations" :key="location.id" :class="[
@@ -110,14 +133,13 @@
         </div>
 
         <!-- Empty state -->
-        <div v-if="!loading && floodLocations.length === 0"
-             class="text-center py-8 text-gray-500">
+        <div v-if="!loading && floodLocations.length === 0" class="text-center py-8 text-gray-500">
           <p>Tidak ada data lokasi dengan status peringatan</p>
         </div>
 
         <!-- End of data indicator -->
         <div v-if="locationStore.hasReachedEnd && floodNotifications.length > 0"
-             class="text-center py-4 text-gray-400 text-xs">
+          class="text-center py-4 text-gray-400 text-xs">
           <p>— Semua data telah dimuat —</p>
         </div>
       </div>
@@ -127,13 +149,20 @@
 
 <script setup>
 import BaseCard from '@/components/ui/BaseCard.vue';
+import Timeline from '@/components/ui/Timeline.vue';
 import { useFloodSocket } from '@/composables/useFloodSocket.js';
-import { formatHistoryTime } from '@/lib/formaters';
+import { formatHistoryTime, timeFormat } from '@/lib/formaters';
+import { useDeviceStore } from '@/stores/deviceStore';
 import { useLocationStore } from '@/stores/locationStore.js';
+import { Icon } from '@iconify/vue';
+import { storeToRefs } from 'pinia';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 
 // Store
 const locationStore = useLocationStore();
+const deviceStore = useDeviceStore()
+
+const { flaskPrediction } = storeToRefs(deviceStore)
 
 // Socket composable
 const {
@@ -144,12 +173,9 @@ const {
   currentLocationStatus,
 } = useFloodSocket();
 
+
 // Local state
 const loadingMoreLocations = ref(false);
-
-// Scroll containers
-const notificationScrollContainer = ref(null);
-const locationScrollContainer = ref(null);
 
 // Props
 const props = defineProps({
@@ -162,6 +188,32 @@ const props = defineProps({
     default: () => []
   }
 });
+
+const iconCondition = (item) => {
+  switch (item) {
+    case "bahaya":
+      return 'solar:danger-triangle-linear'
+    case "siaga":
+      return "solar:danger-triangle-linear"
+    case "waspada":
+      return "solar:danger-triangle-linear"
+    default :
+      return "solar:danger-triangle-linear"
+  }
+}
+
+const backgroundCondition = (item) => {
+  switch (item) {
+    case "bahaya":
+      return "#DC2626";   // Merah (danger)
+    case "siaga":
+      return "#F59E0B";   // Kuning/amber (warning)
+    case "waspada":
+      return "#3B82F6";   // Biru (info)
+    default:
+      return "#22C55E";   // Hijau (aman)
+  }
+}
 
 const floodNotifications = computed(() => {
   // Combine props notifications dengan history dari store
@@ -402,9 +454,12 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: .5;
   }
