@@ -36,24 +36,34 @@
     </BaseCard>
 
     <BaseCard title="Prediksi 15 Menit" :hasArrow="false" customClass="">
-      <Timeline :value="flaskPrediction" class="mt-10">
-        <template #marker="slotProps">
-          <span class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-xs"
-            :style="{ backgroundColor: backgroundCondition(slotProps.item.condition) }">
-            <Icon :icon="iconCondition(slotProps.item.condition)" class="size-6 text-white"/>
-          </span>
-        </template>
-        <template #opposite="slotProps">
-          <small class="text-gray-600">{{ timeFormat(slotProps.item.x) }}</small>
-        </template>
-        <template #content="slotProps">
-          <h3>
-            {{ slotProps.item.condition }}
-          </h3>
-          <small>{{ Math.round(slotProps.item.y) }} cm</small>
-        </template>
-      </Timeline>
+      <div v-if="flaskPrediction.length > 0">
+        <Timeline :value="flaskPrediction" class="mt-10">
+          <template #marker="slotProps">
+            <span class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-xs"
+              :style="{ backgroundColor: backgroundCondition(slotProps.item.condition) }">
+              <Icon :icon="iconCondition(slotProps.item.condition)" class="size-6 text-white" />
+            </span>
+          </template>
+
+          <template #opposite="slotProps">
+            <small class="text-gray-600">
+              {{ timeFormat(slotProps.item.x) }}
+            </small>
+          </template>
+
+          <template #content="slotProps">
+            <h3>{{ slotProps.item.condition }}</h3>
+            <small>{{ Math.round(slotProps.item.y) }} cm</small>
+          </template>
+        </Timeline>
+      </div>
+
+      <!-- JIKA TIDAK ADA DATA -->
+      <div v-else class="text-center py-6 text-gray-500 italic">
+        Tidak ada data prediksi tersedia saat ini.
+      </div>
     </BaseCard>
+
 
     <!-- Alert Locations Card -->
     <BaseCard title="Lokasi Dengan Status Waspada" :hasArrow="false" customClass="flex-grow">
@@ -197,7 +207,7 @@ const iconCondition = (item) => {
       return "solar:danger-triangle-linear"
     case "waspada":
       return "solar:danger-triangle-linear"
-    default :
+    default:
       return "solar:danger-triangle-linear"
   }
 }
