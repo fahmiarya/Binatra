@@ -30,6 +30,11 @@ let intervalId = null;
 
 const callFlaskPrediction = async () => {
   try {
+    if (!selectedDevice.value || selectedDevice.value.code !== '68D05') {
+      deviceStore.setFlaskPrediction([]);
+      return;
+    }
+
     const logs = deviceStore.sensorLogs;
 
     if (!logs || logs.length === 0) return;

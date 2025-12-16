@@ -207,7 +207,6 @@ export const useDeviceStore = defineStore('device', () => {
     sensorLogs.value = updatedLogs
   }
 
-  // ← TAMBAHAN: Method untuk set prediksi Flask
   const setFlaskPrediction = (predictions) => {
     flaskPrediction.value = predictions
   }
