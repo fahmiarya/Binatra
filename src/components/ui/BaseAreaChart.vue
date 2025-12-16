@@ -55,7 +55,7 @@ const callFlaskPrediction = async () => {
       voltage: log.voltage || 0
     }));
 
-    const predictions = await axios.post(`http://localhost:3000/api/v1/prediction`, {
+    const predictions = await axios.post(`/api/v1/prediction`, {
       locationId : selectedDevice.value.location.id,
       data : sensorData
     });
